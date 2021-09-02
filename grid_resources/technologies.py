@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Type, List, Tuple
-from abc import ABC, abstractmethod
+from typing import Type, List, Tuple, Dict, Union
+from abc import ABC
 
 from utils.geometry import Line
 from grid_resources.commodities import Fuel, Emissions
@@ -17,8 +17,8 @@ class EmissionsCharacteristics:
 
 @dataclass
 class TechnoEconomicProperties(ABC):
+    name: str
     resource_class: str
-    resource_type: str
     capital_cost: float
     life: float
     fixed_om: float
@@ -51,20 +51,12 @@ class TechnoEconomicProperties(ABC):
         """
         return self.annualised_capital + self.fixed_om
 
-    @abstractmethod
-    @property
-    def total_var_cost(self) -> float:
-        """ Finds sum of all variable costs per energy supplied
-            by this resource
-        """
-        pass
 
-
+@dataclass
 class GeneratorTechnoEconomicProperties(TechnoEconomicProperties):
     thermal_efficiency: float
     max_capacity_factor: float
-    total_var_cost: float
-    total_fixed_cost: float
+    carbon_capture: float
     emissions: EmissionsCharacteristics
     fuel: Fuel
 
@@ -78,7 +70,34 @@ class GeneratorTechnoEconomicProperties(TechnoEconomicProperties):
                self.emissions.tariff.price + \
                self.fuel_cost_per_energy
 
+    @staticmethod
+    def from_dict(
+            name: str,
+            data: Dict[str, Union[str, float]],
+            fuels: Dict[str, Fuel],
+            emissions_tariff,
+            interest_rate
+    ):
+        fuel = fuels[data['fuel']]
+        emissions = EmissionsCharacteristics(
+            data['emission_rate'],
+            'tonnes / MWh',
+            emissions_tariff
+        )
+        del data['fuel']
+        del data['emission_rate']
 
+        return GeneratorTechnoEconomicProperties(
+            name,
+            resource_class='generator',
+            fuel=fuel,
+            emissions=emissions,
+            interest_rate=interest_rate,
+            **data
+        )
+
+
+@dataclass
 class StorageTechnoEconomicProperties(TechnoEconomicProperties):
     lcos: float
 
@@ -96,7 +115,6 @@ class GridResource(ABC):
 @dataclass
 class Generator(GridResource):
     properties: GeneratorTechnoEconomicProperties
-    resource_class = 'Generator'
 
     @property
     def annual_cost_curve(self) -> Line:
@@ -104,7 +122,8 @@ class Generator(GridResource):
         """
         return Line(
             self.properties.total_var_cost,
-            self.properties.total_fixed_cost
+            self.properties.total_fixed_cost,
+            name=self.name
         )
 
     def get_period_cost(self, period) -> float:
@@ -127,7 +146,7 @@ class Generator(GridResource):
             intercept = self.annual_cost_curve.find_intercept_on_line(
                 generator.annual_cost_curve
             )
-            if intercept.x and 0.0 < intercept.x < 1.0:
+            if intercept.x:
                 intercept_list.append((generator, intercept.x))
         return intercept_list
 

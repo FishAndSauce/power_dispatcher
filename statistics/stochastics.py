@@ -142,7 +142,7 @@ class CorrelatedDistributionModel(StochasticModel):
             )
         if distribution == 'lognormal':
             data_logged = np.log(data)
-            variables_vectors = list([data_logged[data_logged.columns[i]] for i in range(2)])
+            variables_vectors = list([data_logged[data_logged.columns[i]] for i in range(len(data.columns))])
             covariance_matrix = np.cov(variables_vectors)
             distribution_means = data.mean().values
             distribution_std = data.std().values
@@ -183,11 +183,11 @@ class CorrelatedDistributionModel(StochasticModel):
             )
             scaled_normal_sample = correlated_normal_samples + mean_cols
             return pd.Series(
-                scaled_normal_sample,
+                scaled_normal_sample.flatten(),
                 index=self.data_names
             )
         if self.distribution_type == 'lognormal':
             return pd.Series(
-                self.correlated_lognormal_samples(number_samples),
+                self.correlated_lognormal_samples(number_samples).flatten(),
                 index=self.data_names
             )

@@ -97,3 +97,15 @@ class s3BucketManager:
         )
         file = BytesIO(file_object.get()['Body'].read())
         return pd.read_feather(file)
+
+    def s3_csv_to_df(
+            self,
+            folders,
+            fn
+    ) -> pd.DataFrame:
+        file_object = self.resource.Object(
+            self.bucket,
+            self.path(folders, fn)
+        )
+        file = BytesIO(file_object.get()['Body'].read())
+        return pd.read_csv(file)

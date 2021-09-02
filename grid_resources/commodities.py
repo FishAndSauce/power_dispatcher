@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Type, Dict
@@ -20,59 +22,60 @@ class Commodity(ABC):
     price_units: str
 
 
+@dataclass
 class Fuel(Commodity):
     pass
 
 
+@dataclass
 class Emissions(Commodity):
     pass
 
 
+@dataclass
 class PriceModel(ABC):
-    commodities: List[Type[Commodity]]
+    commodities: Dict[str, Commodity]
 
     @abstractmethod
     def update_prices(self):
         pass
 
 
+@dataclass
 class StaticPrice(PriceModel):
-    price: str
 
     def update_prices(self):
-        for commodity in self.commodities:
-            commodity.price = self.price
+        pass
 
 
 @dataclass
 class PriceCorrelation(PriceModel):
     correlation_distribution: CorrelatedDistributionModel
-    commodities: Dict[str, Commodity]
     name: str
+
+    def update_prices(self, number_samples=1):
+        prices = self.correlation_distribution.generate_samples(
+            number_samples
+        )
+        for name, price in prices.items():
+            self.commodities[name].price = round(price, 3)
 
     @staticmethod
     def from_data(
             data: pd.DataFrame,
-            commodities: Dict[str],
+            commodities: Dict[str, Commodity],
             distribution: str
     ):
-        if not all([x in data.columns for x in commodities.items()]):
+        if not all([k in data.columns for k, v in commodities.items()]):
             raise ValueError(
                 f'All keys in commodities dict must'
                 f' be present as headers in data columns'
             )
         data = data[commodities]
         correlation_dist = CorrelatedDistributionModel.from_data(data, distribution)
-        instance = PriceCorrelation(correlation_dist, commodities)
-        instance.update_price()
+        instance = PriceCorrelation(commodities, correlation_dist, distribution)
+        instance.update_prices()
         return instance
-
-    def update_prices(self, number_samples=1):
-        prices = self.correlation_distribution.generate_samples(
-            number_samples
-        )
-        for commodity_name, commodity in self.commodities:
-            commodity.price = prices[commodity_name]
 
 
 @dataclass

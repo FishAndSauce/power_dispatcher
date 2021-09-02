@@ -2,6 +2,7 @@ import json
 import numpy as np
 from dataclasses import dataclass, field
 from typing import List
+from matplotlib import pyplot as plt
 
 
 @dataclass
@@ -58,12 +59,14 @@ class CoordCollection(object):
     def find_envelope(self):
         pass
 
+
 @dataclass
 class Line:
     """Line in the form y = mx + b:
     """
     gradient: float
     y_intercept: float
+    name: str = None
 
     def find_y_at_x(self, x):
         """ Finds the value of y for a given value of x
@@ -113,13 +116,34 @@ class Line:
             intercept = Coord(None, None)  # no intercept for parallel lines
         return intercept
 
+    def plot(
+            self,
+            xmin: float = 0,
+            xmax: float = 1,
+            show: bool = True
+    ):
+        x_array = [xmin, xmax]
+        y_array = [self.find_y_at_x(xmin), self.find_y_at_x(xmax)]
+        plt.plot(
+            x_array,
+            y_array,
+            label=self.name
+        )
+        plt.legend()
+        if show:
+            plt.show()
 
-    # def set_plot(self, x_bounds, **kwargs):
-    #
-    #     x_vals = x_bounds
-    #
-    #     y_val_1 = self.find_y_at_x(x_bounds[0])
-    #     y_val_2 = self.find_y_at_x(x_bounds[1])
-    #     y_vals = [y_val_1, y_val_2]
-    #
-    #     return XYline(x_vals, y_vals, label=self.equation_string, **kwargs)
+@dataclass
+class Lines:
+    lines: List[Line]
+
+    def plot(
+            self,
+            xmin: float = 0,
+            xmax: float = 1,
+            show: bool = True
+        ):
+        for line in self.lines:
+            line.plot(xmin, xmax, show=False)
+        if show:
+            plt.show()

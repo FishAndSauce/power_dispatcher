@@ -32,7 +32,7 @@ class LoadDurationCurve:
         """
         # Can only np.searchsorted on an ascending array, so do length
         # minus backwards search
-        index = self.sample_size - np.searchsorted(self.data.index[::-1], x, 'right')
+        index = np.searchsorted(self.data.index, x, 'right')
         return self.data[index]
 
     def find_area(self, lower_bound, upper_bound):
@@ -57,26 +57,8 @@ class LoadDurationCurve:
     def from_data(data: pd.Series):
         """ Instantiate LoadDurationCurve object from a demand curve.
         """
-        demand_data = np.array(data)
-        max_demand = demand_data.max()
-
-        # Set number of data points equal to demand sample size
-        # Ensures adequate precision compared to runtime
-        sample_size = len(demand_data)
-        # Get cumulative distribution array (time axis)
-        cdf = stats.cumfreq(demand_data, numbins=sample_size, defaultreallimits=(0.0, max_demand))
-        time_axis_np = cdf[0]
-        # Cdf needs inversion as ldc is a flipped version
-        # Normalise against sample size to return proportional representation
-        time_axis_np = (sample_size - time_axis_np) / sample_size
-        # Create demand axis data increments from bin sizes (cdf[2])
-        demand_axis_np = (np.arange(sample_size) // 2) * 2.0
-        # Normalise against max demand to return proportional representation
-        demand_axis_np = demand_axis_np / len(demand_axis_np)
-        return LoadDurationCurve(data=pd.Series(
-            data=demand_axis_np,
-            index=time_axis_np
-        ))
+        data = data.sort_values(ascending=False, ignore_index=True)
+        return LoadDurationCurve(data)
 
 
 @dataclass
@@ -84,6 +66,7 @@ class GridDemand:
     name: str
     units: str
     data: pd.Series
+    periods: int = 8760
 
     @property
     def peak_demand(self):
@@ -96,3 +79,8 @@ class GridDemand:
     @property
     def ldc(self):
         return LoadDurationCurve.from_data(self.data)
+
+    def plot_ldc(self, show=True):
+        self.ldc.data.plot()
+        if show:
+            plt.show()
