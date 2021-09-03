@@ -79,7 +79,7 @@ class PriceCorrelation(PriceModel):
 
 
 @dataclass
-class FuelMarkets:
+class Markets:
     market_prices: List[Type[PriceModel]]
 
     def update_prices(self):

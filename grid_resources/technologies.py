@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Type, List, Tuple, Dict, Union
 from abc import ABC
+import numpy as np
 
 from utils.geometry import Line
 from grid_resources.commodities import Fuel, Emissions
@@ -134,7 +135,7 @@ class Generator(GridResource):
 
     def intercept_x_vals(
         self,
-        other_generators: Tuple[Generator]
+        other_generators: List[Generator]
     ) -> List[Tuple[Generator, float]]:
         """
         Finds the x-coordinates of intercepts between self and another Lines
@@ -149,6 +150,23 @@ class Generator(GridResource):
             if intercept.x:
                 intercept_list.append((generator, intercept.x))
         return intercept_list
+
+
+@dataclass(order=True)
+class InstalledGenerator:
+    capacity: float
+    generator: Generator
+
+    @property
+    def name(self):
+        return self.generator.name
+
+    def dispatch(self, demand: np.ndarray) -> np.ndarray:
+        return np.clip(
+            demand,
+            0,
+            self.capacity
+        )
 
 
 @dataclass

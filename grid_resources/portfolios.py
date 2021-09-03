@@ -2,16 +2,23 @@ from __future__ import annotations
 
 import pandas as pd
 from dataclasses import dataclass
-from typing import Type, List, Tuple
+from typing import Type, List, Tuple, Union
 from abc import ABC, abstractmethod
 import numpy as np
 from operator import itemgetter
 from matplotlib import pyplot as plt
 
-from grid_resources.technologies import Generator, Storage
+from grid_resources.technologies import Generator, InstalledGenerator, Storage
 from grid_resources.demand import GridDemand
+from grid_resources.commodities import Markets
 from utils.geometry import Lines
 
+
+optimal_install_df_columns = [
+    'rank',
+    'capacity',
+    'generator'
+]
 
 class Validator:
     @staticmethod
@@ -59,50 +66,31 @@ class Dispatch:
         self.residual_demand -= dispatch
         self.record[dispatch_name] = dispatch
         self.rank.append(dispatch_name)
+        self.record['residual_demand'] = self.residual_demand
 
+    def plot(self):
+        plt_this = []
+        rank = self.rank
+        rank.append('residual_demand')
+        for gen in rank:
+            plt_this.append(self.record[gen])
 
-@dataclass(order=True)
-class InstalledGenerator:
-    deploy_at: float
-    capacity: float
-    generator: Generator
-
-    @property
-    def name(self):
-        return self.generator.name
-
-    def dispatch(self, demand: np.ndarray) -> np.ndarray:
-        return np.clip(
-            demand,
-            0,
-            self.capacity
+        plt.stackplot(
+            self.record.index,
+            *plt_this,
+            labels=self.rank
         )
+        plt.legend()
+        plt.show()
 
 
 @dataclass
-class OptimalInstallations:
-    installed_generators: List[InstalledGenerator]
-
-    @property
-    def deploy_order(self):
-        return sorted(self.installed_generators, reverse=True)
+class OptimalDeployment:
+    ranked_generators: List[InstalledGenerator]
 
     @staticmethod
     def from_dataframe(df: pd.DataFrame):
-        Validator.df_columns(
-            df,
-            [
-                'deploy_at',
-                'capacity',
-                'generator'
-            ]
-        )
-        gen_list = df.apply(lambda x: InstalledGenerator(
-            x['deploy_at'],
-            x['capacity'],
-            x['generator']
-        ), axis=1).to_list()
-        return OptimalInstallations(gen_list)
+        pass
 
 
 @dataclass
@@ -112,9 +100,9 @@ class PortfolioOptimiser(ABC):
     @staticmethod
     @abstractmethod
     def optimise(
-            generators: List[Generator],
-            demand: GridDemand
-    ) -> OptimalInstallations:
+            generators: List[Union[Generator, InstalledGenerator]],
+            demand: GridDemand,
+    ) -> OptimalDeployment:
         pass
 
 
@@ -123,23 +111,22 @@ class MeritOrderOptimiser(PortfolioOptimiser):
 
     @staticmethod
     def optimise(
-            generators: Tuple[Generator],
+            generators: List[Generator],
             demand: GridDemand
-    ) -> OptimalInstallations:
+    ) -> OptimalDeployment:
 
         ranker = pd.DataFrame(
             columns=[
                 'rank',
+                'deploy_at',
                 'ranked',
                 'intercepts',
                 'max_duration_cost',
-                'deploy_at',
-                'unit_capacity',
             ],
-            index=[x.name for x in generators]
+            index=[g.name for g in generators]
         )
-        ranker['generator'] = generators
         ranker['ranked'] = False
+        ranker['generator'] = generators
 
         # Find x intercepts, sorted descending by x value, between all
         # Find cost of each generators if run for the full period
@@ -200,25 +187,55 @@ class MeritOrderOptimiser(PortfolioOptimiser):
             demand.peak_demand - ranker.at[next_gen.name, "deploy_at"]
 
         ranker = ranker[ranker['ranked']]
-        ranker.sort_values('max_duration_cost', inplace=True)
+        ranker.sort_values('rank', inplace=True)
         ranker['capacity'] = ranker['unit_capacity'] * demand.peak_demand
-        return OptimalInstallations.from_dataframe(ranker)
+
+        gen_list = ranker.apply(lambda x: InstalledGenerator(
+            x['capacity'],
+            x['generator']
+        ), axis=1).to_list()
+        return OptimalDeployment(gen_list)
+
+
+@dataclass
+class ShortRunMarginalCostOptimiser(PortfolioOptimiser):
+
+    @staticmethod
+    def optimise(
+            generators: List[InstalledGenerator],
+            demand: GridDemand,
+    ) -> OptimalDeployment:
+
+        ranker = pd.DataFrame(
+            index=[g.name for g in generators]
+        )
+        ranker['generator'] = generators
+        ranker['short_run_marginal_cost'] = [
+            g.generator.properties.total_var_cost for g in generators
+        ]
+        ranker.sort_values('short_run_marginal_cost', inplace=True)
+        return OptimalDeployment(ranker['generator'].to_list())
 
 
 @dataclass
 class Portfolio(ABC):
-    generator_options: List[Generator]
+    generator_options: List[Union[Generator, InstalledGenerator]]
     storage_options: List[Storage]
     demand: GridDemand
-    optimiser: PortfolioOptimiser
-    optimal_installations: OptimalInstallations = None
-    dispatched: Dispatch = None
+    optimiser: Type[PortfolioOptimiser]
+    markets: Markets
+    optimal_deployment: OptimalDeployment = None
 
-    def __post_init__(self):
-        self.optimal_installations = self.optimiser.optimise(
+    def optimise(self):
+        self.optimal_deployment = self.optimiser.optimise(
             self.generator_options,
             self.demand
         )
+
+    def update_markets(self, reoptimise=True):
+        self.markets.update_prices()
+        if reoptimise:
+            self.optimise()
 
     def plot_ldc(self):
         self.demand.plot_ldc()
@@ -231,7 +248,7 @@ class Portfolio(ABC):
 
     def dispatch(self):
         dispatch = Dispatch(self.demand)
-        for generator in self.optimal_installations.deploy_order:
+        for generator in self.optimal_deployment.ranked_generators:
             dispatch.update(
                 generator.dispatch(dispatch.residual_demand),
                 generator.name
@@ -240,21 +257,8 @@ class Portfolio(ABC):
 
     def plot_dispatch(self):
         if self.dispatched:
-            self.dispatched.record[
-                self.dispatched.rank
-            ].plot.area()
-            plt.show()
+            self.dispatched.plot()
         else:
             print('No dispatch has been calculated')
 
 
-@dataclass
-class MeritOrderPortfolio(Portfolio):
-    optimiser: MeritOrderOptimiser = MeritOrderOptimiser('merit_order')
-
-    def __post_init__(self):
-        optimal_installs = self.optimiser.optimise(
-            self.generator_options,
-            self.demand
-        )
-        self.optimal_installations = optimal_installs
