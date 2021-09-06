@@ -4,9 +4,11 @@ from dataclasses import dataclass
 from typing import Type, List, Tuple, Dict, Union
 from abc import ABC
 import numpy as np
+import pandas as pd
 
 from utils.geometry import Line
 from grid_resources.commodities import Fuel, Emissions
+from grid_resources.demand import GridDemand
 
 
 @dataclass
@@ -33,7 +35,7 @@ class TechnoEconomicProperties(ABC):
             for a given length of time
         """
         return self.interest_rate * (1 + self.interest_rate) ** self.life \
-            / ((1 + self.interest_rate) ** self.life - 1)
+               / ((1 + self.interest_rate) ** self.life - 1)
 
     @property
     def annualised_capital(self) -> float:
@@ -44,7 +46,7 @@ class TechnoEconomicProperties(ABC):
 
     @property
     def total_fixed_cost(self) -> float:
-        """ Finds sum of all fixed costs per capacity supplied
+        """ Finds sum of all annual fixed costs per capacity supplied
             by this resource
 
         Returns:
@@ -67,7 +69,7 @@ class GeneratorTechnoEconomicProperties(TechnoEconomicProperties):
 
     @property
     def total_var_cost(self) -> float:
-        return self.variable_om +\
+        return self.variable_om + \
                self.emissions.tariff.price + \
                self.fuel_cost_per_energy
 
@@ -134,8 +136,8 @@ class Generator(GridResource):
         return self.annual_cost_curve.find_y_at_x(period)
 
     def intercept_x_vals(
-        self,
-        other_generators: List[Generator]
+            self,
+            other_generators: List[Generator]
     ) -> List[Tuple[Generator, float]]:
         """
         Finds the x-coordinates of intercepts between self and another Lines
@@ -152,21 +154,77 @@ class Generator(GridResource):
         return intercept_list
 
 
+@dataclass
+class DispatchLog:
+    demand: GridDemand
+
+    def __post_init__(self):
+        self.dispatch = pd.DataFrame(
+            data=self.demand.data,
+            columns=['demand']
+        )
+        self.annual_dispatch_costs = {}
+        self.levelized_costs = {}
+        self.hourly_costs = pd.DataFrame(
+            data=self.demand.data,
+            columns=['demand']
+        )
+
+
 @dataclass(order=True)
 class InstalledGenerator:
     capacity: float
     generator: Generator
+    constraint: Union[float, np.ndarray] = None
 
     @property
     def name(self):
         return self.generator.name
 
-    def dispatch(self, demand: np.ndarray) -> np.ndarray:
+    def dispatch(
+            self,
+            demand: np.ndarray
+    ) -> np.ndarray:
+        if self.constraint:
+            constraint = self.constraint
+        else:
+            constraint = self.capacity
+
         return np.clip(
             demand,
             0,
-            self.capacity
+            constraint
         )
+
+    def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
+        total_dispatch = dispatch.sum()
+        return total_dispatch * self.generator.properties.total_var_cost + \
+            self.capacity * self.generator.properties.total_fixed_cost
+
+    def lcoe(
+            self,
+            dispatch: np.ndarray,
+            total_dispatch_cost: float = None
+    ) -> float:
+        """ Get levelised cost of energy based on annual dispatch curve
+        """
+        if not total_dispatch_cost:
+            total_dispatch_cost = self.annual_dispatch_cost(dispatch)
+        return total_dispatch_cost / dispatch.sum()
+
+    def hourly_dispatch_cost(
+            self,
+            dispatch: np.ndarray,
+            total_dispatch_cost: float = None,
+            lcoe: float = None,
+    ) -> np.ndarray:
+        """ Get hourly dispatch cost based on lcoe
+        """
+        if not total_dispatch_cost:
+            total_dispatch_cost = self.annual_dispatch_cost(dispatch)
+        if not lcoe:
+            lcoe = self.lcoe(dispatch, total_dispatch_cost)
+        return dispatch * lcoe
 
 
 @dataclass

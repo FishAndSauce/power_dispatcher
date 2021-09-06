@@ -1,7 +1,7 @@
 import pandas as pd
 
 from utils.data_utils import s3BucketManager
-from grid_resources.portfolios import Portfolio
+from grid_resources.portfolios import Portfolio, MeritOrderOptimiser
 from grid_resources.technologies import Generator, GeneratorTechnoEconomicProperties
 from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
 from grid_resources.demand import GridDemand
@@ -67,14 +67,16 @@ fuel_markets = Markets(
 )
 
 start = time()
-merit_order_portfolio = Portfolio(
+merit_order_portfolio = Portfolio.build_portfolio(
     generators,
     [],
-    demand
+    demand,
+    MeritOrderOptimiser('merit_order'),
+    fuel_markets
 )
 
-portfolio.plot_cost_curves()
-portfolio.plot_ldc()
-dispatch = portfolio.dispatch()
-portfolio.plot_dispatch()
+merit_order_portfolio.plot_cost_curves()
+merit_order_portfolio.plot_ldc()
+dispatch = merit_order_portfolio.dispatch()
+merit_order_portfolio.plot_dispatch()
 plt.show()

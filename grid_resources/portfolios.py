@@ -8,7 +8,12 @@ import numpy as np
 from operator import itemgetter
 from matplotlib import pyplot as plt
 
-from grid_resources.technologies import Generator, InstalledGenerator, Storage
+from grid_resources.technologies import (
+    DispatchLog,
+    Generator,
+    InstalledGenerator,
+    Storage,
+)
 from grid_resources.demand import GridDemand
 from grid_resources.commodities import Markets
 from utils.geometry import Lines
@@ -19,6 +24,7 @@ optimal_install_df_columns = [
     'capacity',
     'generator'
 ]
+
 
 class Validator:
     @staticmethod
@@ -47,36 +53,56 @@ def drop_tuple_if_out_of_bounds(
 
 
 @dataclass
-class Dispatch:
+class DispatchLogger:
     demand: GridDemand
 
     def __post_init__(self):
         self.residual_demand = np.array(self.demand.data)
-        self.record = pd.DataFrame(
-            data=self.demand.data,
-            columns=['demand']
-        )
+        self.log = DispatchLog(self.demand)
         self.rank = []
 
-    def update(
+    def log_dispatch(
             self,
             dispatch: np.ndarray,
-            dispatch_name: str
+            dispatch_name: str,
     ):
         self.residual_demand -= dispatch
-        self.record[dispatch_name] = dispatch
+        self.log.dispatch[dispatch_name] = dispatch
         self.rank.append(dispatch_name)
-        self.record['residual_demand'] = self.residual_demand
+        self.log.dispatch['residual_demand'] = self.residual_demand
+
+    def log_annual_dispatch_cost(
+            self,
+            cost: float,
+            dispatch_name: str,
+    ):
+        self.log.annual_dispatch_costs[dispatch_name] = cost
+
+    def log_levelized_cost(
+            self,
+            lcoe: float,
+            dispatch_name: str,
+    ):
+        self.log.levelized_costs[dispatch_name] = lcoe
+
+    def log_hourly_dispatch_cost(
+            self,
+            hourly_cost: np.ndarray,
+            dispatch_name: str,
+    ):
+        self.log.hourly_costs[dispatch_name] = hourly_cost
+
+
 
     def plot(self):
         plt_this = []
         rank = self.rank
         rank.append('residual_demand')
         for gen in rank:
-            plt_this.append(self.record[gen])
+            plt_this.append(self.log.dispatch[gen])
 
         plt.stackplot(
-            self.record.index,
+            self.log.dispatch.index,
             *plt_this,
             labels=self.rank
         )
@@ -218,13 +244,34 @@ class ShortRunMarginalCostOptimiser(PortfolioOptimiser):
 
 
 @dataclass
-class Portfolio(ABC):
+class Portfolio:
     generator_options: List[Union[Generator, InstalledGenerator]]
     storage_options: List[Storage]
     demand: GridDemand
     optimiser: Type[PortfolioOptimiser]
     markets: Markets
     optimal_deployment: OptimalDeployment = None
+    dispatch_logger = None
+
+    @staticmethod
+    def build_portfolio(
+        generator_options: List[Union[Generator, InstalledGenerator]],
+        storage_options: List[Storage],
+        demand: GridDemand,
+        optimiser: Type[PortfolioOptimiser],
+        markets: Markets,
+        optimise=True
+    ):
+        portfolio = Portfolio(
+            generator_options,
+            storage_options,
+            demand,
+            optimiser,
+            markets,
+        )
+        if optimise:
+            portfolio.optimise()
+        return portfolio
 
     def optimise(self):
         self.optimal_deployment = self.optimiser.optimise(
@@ -246,18 +293,44 @@ class Portfolio(ABC):
         )
         my_lines.plot(0, 8760)
 
-    def dispatch(self):
-        dispatch = Dispatch(self.demand)
+    def dispatch(
+            self,
+            log_annual_costs: bool = False,
+            log_lcoe: bool = False,
+            log_hourly_cost: bool = False,
+    ):
+        self.dispatch_logger = DispatchLogger(self.demand)
         for generator in self.optimal_deployment.ranked_generators:
-            dispatch.update(
-                generator.dispatch(dispatch.residual_demand),
+            generator_dispatch = generator.dispatch(
+                self.dispatch_logger.residual_demand
+            )
+            self.dispatch_logger.log_dispatch(
+                generator_dispatch,
                 generator.name
             )
-        self.dispatched = dispatch
+            if log_annual_costs:
+                self.dispatch_logger.log_annual_dispatch_cost(
+                    generator.annual_dispatch_cost(generator_dispatch),
+                    generator.name
+                )
+            if log_lcoe:
+                self.dispatch_logger.log_levelized_cost(
+                    generator.lcoe(
+                        generator_dispatch,
+                    ),
+                    generator.name
+                )
+            if log_hourly_cost:
+                self.dispatch_logger.log.hourly_costs(
+                    generator.hourly_dispatch_cost(
+                        generator_dispatch
+                    ),
+                    generator.name
+                )
 
     def plot_dispatch(self):
-        if self.dispatched:
-            self.dispatched.plot()
+        if self.dispatch_logger:
+            self.dispatch_logger.plot()
         else:
             print('No dispatch has been calculated')
 

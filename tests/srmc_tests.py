@@ -2,12 +2,10 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 from utils.data_utils import s3BucketManager
-from grid_resources.portfolios import MeritOrderPortfolio, SRMCPortfolio
+from grid_resources.portfolios import Portfolio, ShortRunMarginalCostOptimiser
 from grid_resources.technologies import Generator, InstalledGenerator, GeneratorTechnoEconomicProperties
 from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
 from grid_resources.demand import GridDemand
-
-
 
 bucket = s3BucketManager('jw-modelling')
 folders = ['colombia-portfolio-inputs']
@@ -39,7 +37,7 @@ print(capacities)
 
 emissions_tariff = Emissions('carbon_price', 100, '$ / tonne')
 interest_rate = 0.03
-unit_demand = GridDemand(
+demand = GridDemand(
     'test',
     'MWh',
     25 * pd.Series(unit_demand['demand'], index=range(len(unit_demand['demand'])))
@@ -79,9 +77,9 @@ static_prices = StaticPrice({
 correlated_stochastic_prices = PriceCorrelation.from_data(
     coal_gas_diesel_monthly,
     {
-    'coal': fuels_dict['coal'],
-    'diesel': fuels_dict['diesel'],
-    'gas': fuels_dict['gas'],
+        'coal': fuels_dict['coal'],
+        'diesel': fuels_dict['diesel'],
+        'gas': fuels_dict['gas'],
     },
     'lognormal'
 )
@@ -90,10 +88,12 @@ fuel_markets = Markets(
     [static_prices, correlated_stochastic_prices]
 )
 
-portfolio = SRMCPortfolio(
+portfolio = Portfolio.build_portfolio(
     generators,
     [],
-    unit_demand
+    demand,
+    ShortRunMarginalCostOptimiser('smrc'),
+    fuel_markets
 )
 #
 # portfolio.plot_cost_curves()
