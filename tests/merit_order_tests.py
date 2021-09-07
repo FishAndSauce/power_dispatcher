@@ -1,10 +1,11 @@
 import pandas as pd
 
 from utils.data_utils import s3BucketManager
-from grid_resources.portfolios import Portfolio, MeritOrderOptimiser
-from grid_resources.technologies import Generator, GeneratorTechnoEconomicProperties
-from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
-from grid_resources.demand import GridDemand
+from grid.portfolios import Portfolio
+from grid.deployment_optimisers import MeritOrderOptimiser
+from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology
+from grid_resources.commodities import Fuel, StaticPrice, Markets, Emissions
+from grid_resources.demand import AnnualDemand
 from matplotlib import pyplot as plt
 from time import time
 
@@ -23,7 +24,7 @@ coal_gas_diesel_monthly = bucket.s3_csv_to_df(folders, coal_gas_diesel_data_fn)
 
 emissions_tariff = Emissions('carbon_price', 100, '$ / tonne')
 interest_rate = 0.03
-demand = GridDemand(
+demand = AnnualDemand(
     'test',
     'MWh',
     pd.Series(demand['demand'], index=range(len(demand['demand'])))
@@ -39,7 +40,7 @@ generators = []
 for gen, data in generator_economics.items():
     if gen != 'Existing Hydro':
         generators.append(
-            Generator(
+            GeneratorTechnology(
                 gen,
                 properties=GeneratorTechnoEconomicProperties.from_dict(
                     gen,
