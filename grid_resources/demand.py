@@ -108,6 +108,10 @@ class AnnualDemand(ABC):
     def from_dataframe(dataframe: pd.DataFrame):
         pass
 
+    @abstractmethod
+    def update(self):
+        pass
+
 
 @dataclass
 class StochasticAnnualDemand(AnnualDemand):
@@ -123,9 +127,9 @@ class StochasticAnnualDemand(AnnualDemand):
             raise Exception(f'You may only instantiate this objects of this class'
                             f'with class methods - e.g. from_array()')
         self.stochastic_model = RandomOptionModel(self.sample_data)
-        self.new_demand_data()
+        self.update()
 
-    def new_demand_data(
+    def update(
             self,
     ):
         index = pd.date_range(

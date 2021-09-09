@@ -31,6 +31,8 @@ class DispatchLog:
 @dataclass
 class DispatchLogger:
     demand: AnnualDemand
+    residual_demand: np.ndarray = None
+    rank: list = None
 
     def __post_init__(self):
         self.residual_demand = np.array(self.demand.demand_data)
@@ -83,6 +85,12 @@ class DispatchLogger:
         plt.legend()
         plt.show()
 
+    def refresh_log(self):
+        self.residual_demand = np.array(self.demand.demand_data)
+        self.log = DispatchLog(self.demand)
+        self.rank = []
+
+
 
 @dataclass
 class RankedDeployment(ABC):
@@ -126,6 +134,18 @@ class RankedDeployment(ABC):
     @staticmethod
     def from_dataframe(df: pd.DataFrame):
         pass
+
+    def installation_details(
+            self,
+            details: List[str] = None
+    ) -> pd.DataFrame:
+        installed_dict = [
+            g.installation_details(details)
+            for g in self.ranked_installations
+        ]
+        installed = pd.DataFrame(installed_dict)
+        installed['rank'] = installed.index + 1
+        return installed
 
 
 @dataclass

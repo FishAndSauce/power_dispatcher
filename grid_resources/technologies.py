@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, List
 from abc import ABC, abstractmethod
 import numpy as np
+import pandas as pd
 
 from grid_resources.commodities import Emissions
 
@@ -91,3 +92,10 @@ class InstalledTechnology(ABC):
     ) -> np.ndarray:
         pass
 
+    def installation_details(
+            self,
+            details: List[str]=None
+    ) -> dict:
+        if not details:
+            details = ['name', 'technology', 'capacity']
+        return {detail: getattr(self, detail) for detail in details}

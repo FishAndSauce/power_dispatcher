@@ -100,16 +100,18 @@ portfolio = Portfolio.build_portfolio(
     [],
     demand,
     ShortRunMarginalCostOptimiser('smrc'),
-    fuel_markets
+    fuel_markets,
 )
-#
+
+installation_details = portfolio.optimal_generator_deployment.installation_details()
+print(installation_details)
 # portfolio.plot_cost_curves()
 # portfolio.plot_ldc()
-dispatch = portfolio.dispatch()
-portfolio.plot_dispatch()
-plt.show()
+# portfolio.dispatch()
+# portfolio.plot_dispatch()
+# plt.show()
 
-portfolio.demand.new_demand_data()
-dispatch = portfolio.dispatch()
-portfolio.plot_dispatch()
-plt.show()
+# portfolio.update_demand()
+# portfolio.dispatch()
+# portfolio.plot_dispatch()
+# plt.show()

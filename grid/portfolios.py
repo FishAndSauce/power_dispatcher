@@ -35,6 +35,11 @@ class Validator:
 
 
 @dataclass
+class ScenarioLogger:
+    pass
+
+
+@dataclass
 class Portfolio:
     generator_options: List[Union[GeneratorTechnology, InstalledGenerator]]
     storage_options: List[InstalledStorage]
@@ -43,7 +48,8 @@ class Portfolio:
     markets: Markets
     optimal_generator_deployment: RankedGeneratorDeployment = None
     optimal_storage_deployment: RankedStorageDeployment = None
-    deploy_storage_first = True
+    deploy_storage_first: bool = True
+    dispatch_logger: DispatchLogger = None
 
     def __post_init__(self):
         self.dispatch_logger = DispatchLogger(self.demand)
@@ -111,3 +117,7 @@ class Portfolio:
 
     def plot_dispatch(self):
         self.dispatch_logger.plot()
+
+    def update_demand(self):
+        self.demand.update()
+        self.dispatch_logger.refresh_log()
