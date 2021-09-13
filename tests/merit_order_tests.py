@@ -5,7 +5,7 @@ from grid.portfolios import Portfolio
 from grid.deployment_optimisers import MeritOrderOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology
 from grid_resources.commodities import Fuel, StaticPrice, Markets, Emissions
-from grid_resources.demand import AnnualDemand
+from grid_resources.curves import AnnualCurve
 from matplotlib import pyplot as plt
 from time import time
 
@@ -24,7 +24,7 @@ coal_gas_diesel_monthly = bucket.s3_csv_to_df(folders, coal_gas_diesel_data_fn)
 
 emissions_tariff = Emissions('carbon_price', 100, '$ / tonne')
 interest_rate = 0.03
-demand = AnnualDemand(
+demand = AnnualCurve(
     'test',
     'MWh',
     pd.Series(demand['demand'], index=range(len(demand['demand'])))

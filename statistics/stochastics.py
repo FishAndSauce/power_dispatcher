@@ -34,14 +34,6 @@ class Validator:
         if data.shape[0] < 2:
             raise ValueError(f'Invalid data: data must have 2 or more columns to be multivariate')
 
-    @staticmethod
-    def not_ragged(data: List[list]):
-        first_length = len(data[0])
-        for arr in data:
-            if first_length != len(arr):
-                raise ValueError(f'Invalid array: Nested arrays must not be ragged'
-                                 f'(i.e. nested arrays must be of equal length')
-
 
 class DistributionModel(ABC):
     @staticmethod
@@ -70,23 +62,26 @@ class StochasticModel(ABC):
         pass
 
 
-# @dataclass
-# class HistoricalSampleModel(StochasticModel):
-#     data_set: pd.Series
-#
-#     def generate_samples(self, number_samples=1) -> np.ndarray:
-#         samples = np.random.choice(self.data_set, number_samples)
-#         if number_samples == 1:
-#             return samples[0]
-#         else:
-#             return samples
+@dataclass
+class RandomWindowChoiceModel(StochasticModel):
+    data: np.ndarray
+
+    @property
+    def last_idx(self):
+        return len(self.data) - 1
+
+    def generate_samples(self, number_samples=1):
+        start_index = np.random.randint(
+            0,
+            self.last_idx - number_samples
+        )
+        end_index = start_index + number_samples -1
+        return self.data[start_index: end_index]
+
 
 @dataclass
-class RandomOptionModel(StochasticModel):
+class RandomArrayChoiceModel(StochasticModel):
     data: List[list]
-
-    def __post_init__(self):
-        Validator.not_ragged(self.data)
 
     def generate_samples(self, number_samples=1) -> np.ndarray:
         random_idx = np.random.randint(

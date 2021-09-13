@@ -109,7 +109,7 @@ class InstalledGenerator(InstalledTechnology):
             demand: np.ndarray
     ) -> np.ndarray:
         if self.constraint:
-            constraint = self.constraint
+            constraint = np.clip(self.constraint, 0, self.capacity)
         else:
             constraint = self.capacity
 
@@ -122,7 +122,7 @@ class InstalledGenerator(InstalledTechnology):
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
         return total_dispatch * self.technology.properties.total_var_cost + \
-               self.capacity * self.technology.properties.total_fixed_cost
+            self.capacity * self.technology.properties.total_fixed_cost
 
     def levelized_cost(
             self,

@@ -6,9 +6,10 @@ import numpy as np
 
 import pandas as pd
 
-from grid_resources.demand import AnnualDemand
-from grid_resources.dispatch import RankedGeneratorDeployment
+from grid_resources.curves import AnnualCurve
+from grid_resources.dispatch import RankedDeploymentGroup, RankedDeployment
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, InstalledGenerator
+from grid_resources.technologies import TechnologyOptions, InstalledTechnologyOptions
 
 
 def idx(columns, name):
@@ -30,8 +31,7 @@ class DeploymentOptimiser(ABC):
     @staticmethod
     @abstractmethod
     def optimise(
-            generators: List[Union[GeneratorTechnology, InstalledGenerator]],
-            demand: AnnualDemand,
+            generators: TechnologyOptions,
     ) -> RankedGeneratorDeployment:
         pass
 
@@ -41,33 +41,31 @@ class MeritOrderOptimiser(DeploymentOptimiser):
 
     @staticmethod
     def optimise(
-            generators: List[GeneratorTechnology],
-            demand: AnnualDemand
+            generators: TechnologyOptions,
+            demand: AnnualCurve
     ) -> RankedGeneratorDeployment:
-
-        ranker = pd.DataFrame(
-            columns=[
-                'rank',
-                'deploy_at',
-                'ranked',
-                'intercepts',
-                'max_duration_cost',
-            ],
-            index=[g.name for g in generators]
+        
+        ranker = pd.DataFrame.from_dict(
+            generators.options, 
+            'index', 
+            columns=['generator']
         )
+        ranker['rank'] = np.nan
+        ranker['deploy_at'] = np.nan
+        ranker['intercepts'] = np.nan
+        ranker['max_duration_cost'] = np.nan
         ranker['ranked'] = False
-        ranker['generator'] = generators
 
         # Find x intercepts, sorted descending by x value, between all
         # Find cost of each generators if run for the full period
-        for gen in generators:
+        for name, gen in generators.options.items():
             sorted_intercepts = sorted(
                 gen.intercept_x_vals(generators),
                 reverse=True,
                 key=itemgetter(1)
             )
-            ranker.at[gen.name, 'intercepts'] = sorted_intercepts
-            ranker.at[gen.name, 'max_duration_cost'] = \
+            ranker.at[name, 'intercepts'] = sorted_intercepts
+            ranker.at[name, 'max_duration_cost'] = \
                 gen.get_period_cost(demand.periods)
         ranker.sort_values('max_duration_cost', inplace=True)
 
@@ -108,17 +106,17 @@ class MeritOrderOptimiser(DeploymentOptimiser):
                 upper_bound,
                 lower_bound
             )
-            if next_rank > len(generators) + 1:
+            if next_rank > len(generators.options) + 1:
                 raise ValueError(f'There is probably a bug in this loop!'
                                  f'The number of ranks should not exceed '
                                  f'the number of generators')
         # finalise
-        ranker.at[next_gen.name, "unit_capacity"] =\
-            demand.peak_demand - ranker.at[next_gen.name, "deploy_at"]
+        ranker.at[next_gen.name, "unit_capacity"] = \
+            demand.peak - ranker.at[next_gen.name, "deploy_at"]
 
         ranker = ranker[ranker['ranked']]
         ranker.sort_values('rank', inplace=True)
-        ranker['capacity'] = ranker['unit_capacity'] * demand.peak_demand
+        ranker['capacity'] = ranker['unit_capacity'] * demand.peak
 
         gen_list = ranker.apply(lambda x: InstalledGenerator(
             x['generator'].name,
@@ -132,17 +130,37 @@ class MeritOrderOptimiser(DeploymentOptimiser):
 class ShortRunMarginalCostOptimiser(DeploymentOptimiser):
 
     @staticmethod
-    def optimise(
-            generators: List[InstalledGenerator],
-            demand: AnnualDemand,
-    ) -> RankedGeneratorDeployment:
+    def rank_technologies(
+            technology: InstalledTechnologyOptions,
+            optimise_against: str,
+    ):
+        if not technology:
+            return None
 
-        ranker = pd.DataFrame(
-            index=[g.name for g in generators]
+        ranker = pd.DataFrame.from_dict(
+            technology.options,
+            'index',
+            columns=['technology']
         )
-        ranker['generator'] = generators
-        ranker['short_run_marginal_cost'] = [
-            g.technology.properties.total_var_cost for g in generators
+        ranker[optimise_against] = [
+            getattr(t.technology.properties, optimise_against)
+            for t in technology.options.values()
         ]
         ranker.sort_values('short_run_marginal_cost', inplace=True)
-        return RankedGeneratorDeployment(ranker['generator'].to_list())
+        return RankedDeployment(ranker['generator'].to_list())
+
+    def optimise(
+            self,
+            generators: InstalledTechnologyOptions = None,
+            passive_generators: InstalledTechnologyOptions = None,
+            storages: InstalledTechnologyOptions = None
+    ) -> RankedDeploymentGroup:
+        ranked_generators = self.rank_technologies(generators, 'total_var_cost')
+        ranked_storages = self.rank_technologies(storages, 'levelised_cost')
+        ranked_passive_generators = self.rank_technologies(passive_generators, 'levelised_cost')
+
+        return RankedDeploymentGroup(
+            ranked_generators,
+            ranked_storages,
+            ranked_passive_generators,
+        )

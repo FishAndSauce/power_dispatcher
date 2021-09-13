@@ -12,6 +12,7 @@ from utils.time_series_utils import Scheduler, Forecaster, PeakAreas
 @dataclass
 class StorageTechnoEconomicProperties(TechnoEconomicProperties):
     round_trip_efficiency: float
+    levelised_cost: float
 
     @property
     def total_var_cost(self) -> float:

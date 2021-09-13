@@ -1,17 +1,15 @@
 from __future__ import annotations
 
+from abc import ABC
 import pandas as pd
 from dataclasses import dataclass
-from typing import Type, List, Union
+from typing import List
 
-from grid.deployment_optimisers import DeploymentOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, InstalledGenerator
-from grid_resources.storage_technologies import InstalledStorage
-from grid_resources.demand import AnnualDemand
-from grid_resources.commodities import Markets
-from grid_resources.dispatch import RankedGeneratorDeployment, RankedStorageDeployment, DispatchLogger
+from grid_resources.curves import AnnualCurve
+from grid_resources.dispatch import RankedDeploymentGroup
+from grid.results_logging import DispatchLogger
 from utils.geometry import Lines
-
 
 optimal_install_df_columns = [
     'rank',
@@ -40,84 +38,53 @@ class ScenarioLogger:
 
 
 @dataclass
-class Portfolio:
-    generator_options: List[Union[GeneratorTechnology, InstalledGenerator]]
-    storage_options: List[InstalledStorage]
-    demand: AnnualDemand
-    optimiser: Type[DeploymentOptimiser]
-    markets: Markets
-    optimal_generator_deployment: RankedGeneratorDeployment = None
-    optimal_storage_deployment: RankedStorageDeployment = None
-    deploy_storage_first: bool = True
-    dispatch_logger: DispatchLogger = None
-
-    def __post_init__(self):
-        self.dispatch_logger = DispatchLogger(self.demand)
-
-    @staticmethod
-    def build_portfolio(
-        generator_options: List[Union[GeneratorTechnology, InstalledGenerator]],
-        storage_options: List[InstalledStorage],
-        demand: AnnualDemand,
-        optimiser: Type[DeploymentOptimiser],
-        markets: Markets,
-        optimise=True
-    ):
-        portfolio = Portfolio(
-            generator_options,
-            storage_options,
-            demand,
-            optimiser,
-            markets,
-        )
-        if optimise:
-            portfolio.optimise()
-        return portfolio
-
-    def optimise(self):
-        self.optimal_generator_deployment = self.optimiser.optimise(
-            self.generator_options,
-            self.demand
-        )
-
-    def update_markets(self, reoptimise=True):
-        self.markets.update_prices()
-        if reoptimise:
-            self.optimise()
+class Portfolio(ABC):
+    demand: AnnualCurve
+    ranked_deployment_groups: RankedDeploymentGroup
 
     def plot_ldc(self):
         self.demand.plot_ldc()
-
-    def plot_cost_curves(self):
-        my_lines = Lines(
-            [g.annual_cost_curve for g in self.generator_options]
-        )
-        my_lines.plot(0, 8760)
 
     def dispatch(
             self,
             log_annual_costs: bool = False,
             log_lcoe: bool = False,
             log_hourly_cost: bool = False,
+            logger: DispatchLogger = None
     ):
-        deployment_order = [
-            self.optimal_storage_deployment,
-            self.optimal_generator_deployment
-        ]
-        if not self.deploy_storage_first:
-            deployment_order.reverse()
-        for deployment in deployment_order:
+        for deployment in self.ranked_deployment_groups.deployment_order:
             if deployment:
                 deployment.dispatch(
-                    self.dispatch_logger,
                     log_annual_costs,
                     log_lcoe,
                     log_hourly_cost,
+                    logger,
                 )
 
-    def plot_dispatch(self):
-        self.dispatch_logger.plot()
+    def installation_details(self):
+        installations = [
+            getattr(self, tech_type)
+            for tech_type in self.deploy_order
+            if getattr(self, tech_type)
+        ]
+        details_frames = [i.installation_details() for i in installations]
+        return pd.concat(
+            details_frames,
+            axis=1
+        )
 
-    def update_demand(self):
-        self.demand.update()
-        self.dispatch_logger.refresh_log()
+
+@dataclass
+class ShortRunMarginalCostPortfolio(Portfolio):
+    pass
+
+
+@dataclass
+class MeritOrderPortfolio(Portfolio):
+    generator_options: List[GeneratorTechnology] = None
+
+    def plot_cost_curves(self):
+        my_lines = Lines(
+            [g.annual_cost_curve for g in self.generator_options]
+        )
+        my_lines.plot(0, 8760)

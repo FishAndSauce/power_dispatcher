@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import List, Type, Dict
 import pandas as pd
 
+from grid_resources.dynamics import DynamicResource
 from statistics.stochastics import CorrelatedDistributionModel
 
 
@@ -79,9 +80,9 @@ class PriceCorrelation(PriceModel):
 
 
 @dataclass
-class Markets:
-    market_prices: List[Type[PriceModel]]
+class Markets(DynamicResource):
+    market_prices: List[PriceModel]
 
-    def update_prices(self):
+    def refresh(self):
         for market_price in self.market_prices:
             market_price.update_prices()

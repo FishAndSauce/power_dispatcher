@@ -1,13 +1,15 @@
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from grid_resources.dispatch import RankedGeneratorDeployment
 from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
 from grid.deployment_optimisers import ShortRunMarginalCostOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology, \
     InstalledGenerator
 from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
-from grid_resources.demand import StochasticAnnualDemand
+from grid_resources.curves import StochasticChoiceAnnualCurve
+from grid_resources.passive_generator_technologies import PassiveInstalledGenerator
 
 bucket = s3BucketManager('jw-modelling')
 folders = ['colombia-portfolio-inputs']
@@ -41,7 +43,7 @@ print(capacities)
 
 emissions_tariff = Emissions('carbon_price', 100, '$ / tonne')
 interest_rate = 0.03
-demand = StochasticAnnualDemand.from_array(
+demand = StochasticChoiceAnnualCurve.from_array(
     'test',
     'MWh',
     2016,
@@ -95,6 +97,13 @@ fuel_markets = Markets(
     [static_prices, correlated_stochastic_prices]
 )
 
+# for year in [2018]:
+#     s3BucketManager.s3_json_to_dict()
+#
+# solar = PassiveInstalledGenerator
+# passive_generation = RankedGeneratorDeployment()
+
+
 portfolio = Portfolio.build_portfolio(
     generators,
     [],
@@ -103,9 +112,7 @@ portfolio = Portfolio.build_portfolio(
     fuel_markets,
 )
 
-installation_details = portfolio.optimal_generator_deployment.installation_details()
-print(installation_details)
-# portfolio.plot_cost_curves()
+print(portfolio.installation_details())
 # portfolio.plot_ldc()
 # portfolio.dispatch()
 # portfolio.plot_dispatch()
