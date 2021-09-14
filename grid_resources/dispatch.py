@@ -4,14 +4,13 @@ from typing import List, Union, Tuple
 
 import pandas as pd
 
-from grid_resources.dispatchable_generator_technologies import InstalledGenerator
-from grid_resources.storage_technologies import InstalledStorage
-
+from grid_resources.dispatchable_generator_technologies import Generator
+from grid_resources.storage_technologies import Storage
 
 
 @dataclass
 class RankedDeployment(ABC):
-    ranked_installations: List[Union[InstalledGenerator, InstalledStorage]]
+    ranked_installations: List[Union[Generator, Storage]]
 
     def dispatch(
             self,

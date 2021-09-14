@@ -17,7 +17,10 @@ class EmissionsCharacteristics:
 
 
 @dataclass
-class TechnoEconomicProperties(ABC):
+class GridTechnology(ABC):
+    """ Power generation/storage technology with techno-economic data
+    and associated derived properties
+    """
     name: str
     resource_class: str
     capital_cost: float
@@ -53,14 +56,11 @@ class TechnoEconomicProperties(ABC):
         return self.annualised_capital + self.fixed_om
 
 
-@dataclass
-class GridTechnology(ABC):
-    name: str
-    properties: Type[TechnoEconomicProperties]
-
-
 @dataclass(order=True)
-class InstalledTechnology(ABC):
+class Asset(ABC):
+    """ Installed asset(or aggregation of identical assets), of specific technology type,
+    capable of power dispatch (including active and passive dispatch)
+     """
     name: str
     capacity: float
     technology: GridTechnology
@@ -103,18 +103,14 @@ class InstalledTechnology(ABC):
 
 
 @dataclass
-class OrderedInstalledTechnologies:
-    ordered_technologies: List[InstalledTechnology]
+class RankedAssets:
+    """ """
+    asset_rank: List[Asset]
 
 
 @dataclass
-class TechnologyOptions:
-    options: Dict[GridTechnology]
-
-
-@dataclass
-class InstalledTechnologyOptions:
-    options: Dict[str, InstalledTechnology]
+class AssetOptions:
+    options: Dict[str, Asset]
 
     def update_capacities(self, capacities: dict):
         for gen, new_capacity in capacities.items():
@@ -123,8 +119,8 @@ class InstalledTechnologyOptions:
     def technology_list(self):
         return list([tech for tech in self.options.values])
 
-    def ordered_list(self, order: List[str]) -> OrderedInstalledTechnologies:
-        return OrderedInstalledTechnologies(
+    def ordered_list(self, order: List[str]) -> RankedAssets:
+        return RankedAssets(
             list([self.options[name] for name in order])
         )
 

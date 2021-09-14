@@ -8,9 +8,9 @@ from grid_resources.commodities import Markets
 from grid_resources.passive_generator_technologies import PassiveResources
 
 from grid_resources.technologies import (
-    InstalledTechnologyOptions,
-    OrderedInstalledTechnologies,
-    InstalledTechnology,
+    AssetOptions,
+    RankedAssets,
+    Asset,
 )
 
 
@@ -28,8 +28,8 @@ class CapacityCapper:
     """
     capacity_cap: float
     total_capacity: float
-    high_priorities: InstalledTechnologyOptions
-    low_priorities: OrderedInstalledTechnologies
+    high_priorities: AssetOptions
+    low_priorities: RankedAssets
     residual_exceedance: float = 0.0
     
     @property
@@ -42,7 +42,7 @@ class CapacityCapper:
     def cap_total_capacity(self):
         residual_exceedance = self.exceedance
         if self.exceedance > 0:
-            for tech in self.low_priorities.ordered_technologies:
+            for tech in self.low_priorities.asset_rank:
                 capacity_displacement = min(
                     tech.capacity,
                     residual_exceedance
@@ -77,9 +77,9 @@ class SRMCScenarioManager:
     demand: AnnualCurve
     markets: Markets
     passive_resource: PassiveResources
-    generators: InstalledTechnologyOptions
-    storages: InstalledTechnologyOptions
-    passive_generators: InstalledTechnologyOptions
+    generators: AssetOptions
+    storages: AssetOptions
+    passive_generators: AssetOptions
     capacity_capper: CapacityCapper
     constraints: CapacityConstraints
     optimiser: ShortRunMarginalCostOptimiser
@@ -96,7 +96,7 @@ class SRMCScenarioManager:
             + self.passive_generators.technology_list()
 
     @property
-    def all_technologies_dict(self) -> Dict[str, InstalledTechnology]:
+    def all_technologies_dict(self) -> Dict[str, Asset]:
         return {
             **self.generators.options,
             **self.storages.options,

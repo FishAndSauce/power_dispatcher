@@ -5,7 +5,7 @@ import pandas as pd
 from dataclasses import dataclass
 from typing import List
 
-from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, InstalledGenerator
+from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
 from grid_resources.curves import AnnualCurve
 from grid_resources.dispatch import RankedDeploymentGroup
 from grid.results_logging import DispatchLogger

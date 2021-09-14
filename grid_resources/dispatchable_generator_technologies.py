@@ -7,16 +7,19 @@ import numpy as np
 
 from grid_resources.commodities import Fuel
 from grid_resources.technologies import (
-    TechnoEconomicProperties,
     EmissionsCharacteristics,
     GridTechnology,
-    InstalledTechnology
+    Asset
 )
 from utils.geometry import Line
 
 
 @dataclass
-class GeneratorTechnoEconomicProperties(TechnoEconomicProperties):
+class GeneratorTechnology(GridTechnology):
+    """ Dispatchable generation technology - e.g. hydro,
+    coal, gas, diesel - to which specific annual cost calculations
+    are applicable (e.g. cost curves)
+    """
     thermal_efficiency: float
     max_capacity_factor: float
     carbon_capture: float
@@ -33,44 +36,13 @@ class GeneratorTechnoEconomicProperties(TechnoEconomicProperties):
                self.emissions.tariff.price + \
                self.fuel_cost_per_energy
 
-    @staticmethod
-    def from_dict(
-            name: str,
-            data: Dict[str, Union[str, float]],
-            fuels: Dict[str, Fuel],
-            emissions_tariff,
-            interest_rate
-    ):
-        fuel = fuels[data['fuel']]
-        emissions = EmissionsCharacteristics(
-            data['emission_rate'],
-            'tonnes / MWh',
-            emissions_tariff
-        )
-        del data['fuel']
-        del data['emission_rate']
-
-        return GeneratorTechnoEconomicProperties(
-            name,
-            resource_class='generator',
-            fuel=fuel,
-            emissions=emissions,
-            interest_rate=interest_rate,
-            **data
-        )
-
-
-@dataclass
-class GeneratorTechnology(GridTechnology):
-    properties: GeneratorTechnoEconomicProperties
-
     @property
     def annual_cost_curve(self) -> Line:
         """Get linear cost curve based on total var and fixed annual costs
         """
         return Line(
-            self.properties.total_var_cost,
-            self.properties.total_fixed_cost,
+            self.total_var_cost,
+            self.total_fixed_cost,
             name=self.name
         )
 
@@ -98,9 +70,35 @@ class GeneratorTechnology(GridTechnology):
                 intercept_list.append((generator, intercept.x))
         return intercept_list
 
+    @staticmethod
+    def from_dict(
+            name: str,
+            data: Dict[str, Union[str, float]],
+            fuels: Dict[str, Fuel],
+            emissions_tariff,
+            interest_rate
+    ):
+        fuel = fuels[data['fuel']]
+        emissions = EmissionsCharacteristics(
+            data['emission_rate'],
+            'tonnes / MWh',
+            emissions_tariff
+        )
+        del data['fuel']
+        del data['emission_rate']
+
+        return GeneratorTechnology(
+            name,
+            resource_class='generator',
+            fuel=fuel,
+            emissions=emissions,
+            interest_rate=interest_rate,
+            **data
+        )
+
 
 @dataclass(order=True)
-class InstalledGenerator(InstalledTechnology):
+class Generator(Asset):
     technology: GeneratorTechnology
     constraint: Union[float, np.ndarray] = None
 
@@ -121,8 +119,8 @@ class InstalledGenerator(InstalledTechnology):
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
-        return total_dispatch * self.technology.properties.total_var_cost + \
-            self.capacity * self.technology.properties.total_fixed_cost
+        return total_dispatch * self.technology.total_var_cost + \
+            self.capacity * self.technology.total_fixed_cost
 
     def levelized_cost(
             self,

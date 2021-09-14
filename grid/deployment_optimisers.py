@@ -8,8 +8,8 @@ import pandas as pd
 
 from grid_resources.curves import AnnualCurve
 from grid_resources.dispatch import RankedDeploymentGroup, RankedDeployment
-from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, InstalledGenerator
-from grid_resources.technologies import TechnologyOptions, InstalledTechnologyOptions
+from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
+from grid_resources.technologies import AssetOptions, AssetOptions
 
 
 def idx(columns, name):
@@ -31,7 +31,7 @@ class DeploymentOptimiser(ABC):
     @staticmethod
     @abstractmethod
     def optimise(
-            generators: TechnologyOptions,
+            generators: AssetOptions,
     ) -> RankedGeneratorDeployment:
         pass
 
@@ -41,7 +41,7 @@ class MeritOrderOptimiser(DeploymentOptimiser):
 
     @staticmethod
     def optimise(
-            generators: TechnologyOptions,
+            generators: AssetOptions,
             demand: AnnualCurve
     ) -> RankedGeneratorDeployment:
         
@@ -118,7 +118,7 @@ class MeritOrderOptimiser(DeploymentOptimiser):
         ranker.sort_values('rank', inplace=True)
         ranker['capacity'] = ranker['unit_capacity'] * demand.peak
 
-        gen_list = ranker.apply(lambda x: InstalledGenerator(
+        gen_list = ranker.apply(lambda x: Generator(
             x['generator'].name,
             x['capacity'],
             x['generator']
@@ -131,7 +131,7 @@ class ShortRunMarginalCostOptimiser(DeploymentOptimiser):
 
     @staticmethod
     def rank_technologies(
-            technology: InstalledTechnologyOptions,
+            technology: AssetOptions,
             optimise_against: str,
     ):
         if not technology:
@@ -151,9 +151,9 @@ class ShortRunMarginalCostOptimiser(DeploymentOptimiser):
 
     def optimise(
             self,
-            generators: InstalledTechnologyOptions = None,
-            passive_generators: InstalledTechnologyOptions = None,
-            storages: InstalledTechnologyOptions = None
+            generators: AssetOptions = None,
+            passive_generators: AssetOptions = None,
+            storages: AssetOptions = None
     ) -> RankedDeploymentGroup:
         ranked_generators = self.rank_technologies(generators, 'total_var_cost')
         ranked_storages = self.rank_technologies(storages, 'levelised_cost')

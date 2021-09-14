@@ -6,10 +6,10 @@ from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
 from grid.deployment_optimisers import ShortRunMarginalCostOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology, \
-    InstalledGenerator
+    Generator
 from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
 from grid_resources.curves import StochasticChoiceAnnualCurve
-from grid_resources.passive_generator_technologies import PassiveInstalledGenerator
+from grid_resources.passive_generator_technologies import PassiveGenerator
 
 bucket = s3BucketManager('jw-modelling')
 folders = ['colombia-portfolio-inputs']
@@ -59,7 +59,7 @@ for fuel in fuels_data['fuels']:
 generators = []
 for gen, data in generator_economics.items():
     generators.append(
-        InstalledGenerator(
+        Generator(
             gen,
             capacities[gen],
             GeneratorTechnology(

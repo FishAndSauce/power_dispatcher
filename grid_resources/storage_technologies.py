@@ -5,18 +5,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from grid_resources.technologies import GridTechnology, TechnoEconomicProperties, InstalledTechnology
+from grid_resources.technologies import GridTechnology, Asset
 from utils.time_series_utils import Scheduler, Forecaster, PeakAreas
-
-
-@dataclass
-class StorageTechnoEconomicProperties(TechnoEconomicProperties):
-    round_trip_efficiency: float
-    levelised_cost: float
-
-    @property
-    def total_var_cost(self) -> float:
-        return self.variable_om
 
 
 @dataclass
@@ -68,11 +58,16 @@ class PeakShaveStorageOptimiser:
 
 @dataclass
 class StorageTechnology(GridTechnology):
-    properties: StorageTechnoEconomicProperties
+    round_trip_efficiency: float
+    levelised_cost: float
+
+    @property
+    def total_var_cost(self) -> float:
+        return self.variable_om
 
 
 @dataclass
-class InstalledStorage(InstalledTechnology):
+class Storage(Asset):
     technology: StorageTechnology
     hours_storage: float
     charge_capacity: float
@@ -106,7 +101,7 @@ class InstalledStorage(InstalledTechnology):
     def update_state(self, energy: float):
         if energy > 0:
             # Apply efficiency on charge only
-            energy = self.technology.properties.round_trip_efficiency * energy
+            energy = self.technology.round_trip_efficiency * energy
         self.state_of_charge += energy / self.energy_capacity
 
     def energy_request(self, energy) -> float:
@@ -146,8 +141,8 @@ class InstalledStorage(InstalledTechnology):
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
-        return total_dispatch * self.technology.properties.total_var_cost + \
-               self.capacity * self.technology.properties.total_fixed_cost
+        return total_dispatch * self.technology.total_var_cost + \
+               self.capacity * self.technology.total_fixed_cost
 
     def levelized_cost(
             self,

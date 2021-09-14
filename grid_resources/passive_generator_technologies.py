@@ -6,9 +6,8 @@ import numpy as np
 
 from grid_resources.dynamics import DynamicResource
 from grid_resources.technologies import (
-    InstalledTechnology,
+    Asset,
     GridTechnology,
-    TechnoEconomicProperties
 )
 from grid_resources.curves import AnnualCurve
 
@@ -23,12 +22,7 @@ class PassiveResources(DynamicResource):
 
 
 @dataclass
-class PassiveGeneration(ABC):
-    generation: np.ndarray
-
-
-@dataclass
-class PassiveTechnoEconomicProperties(TechnoEconomicProperties):
+class PassiveTechnology(GridTechnology):
     round_trip_efficiency: float
     levelized_cost: float = None
 
@@ -38,12 +32,7 @@ class PassiveTechnoEconomicProperties(TechnoEconomicProperties):
 
 
 @dataclass
-class PassiveTechnology(GridTechnology):
-    properties: PassiveTechnoEconomicProperties
-
-
-@dataclass
-class PassiveInstalledGenerator(InstalledTechnology):
+class PassiveGenerator(Asset):
     technology: PassiveTechnology
     passive_resource: AnnualCurve
     constraint: Union[float, np.ndarray] = None
@@ -65,16 +54,16 @@ class PassiveInstalledGenerator(InstalledTechnology):
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
-        return total_dispatch * self.technology.properties.total_var_cost + \
-            self.capacity * self.technology.properties.total_fixed_cost
+        return total_dispatch * self.technology.total_var_cost + \
+            self.capacity * self.technology.total_fixed_cost
 
     def levelized_cost(
             self,
             dispatch: np.ndarray,
             total_dispatch_cost: float = None
     ) -> float:
-        if self.technology.properties.levelized_cost:
-            return self.technology.properties.levelized_cost
+        if self.technology.levelized_cost:
+            return self.technology.levelized_cost
         else:
             if not total_dispatch_cost:
                 total_dispatch_cost = self.annual_dispatch_cost(dispatch)
