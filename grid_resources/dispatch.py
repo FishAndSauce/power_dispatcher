@@ -8,6 +8,7 @@ from grid_resources.dispatchable_generator_technologies import InstalledGenerato
 from grid_resources.storage_technologies import InstalledStorage
 
 
+
 @dataclass
 class RankedDeployment(ABC):
     ranked_installations: List[Union[InstalledGenerator, InstalledStorage]]
