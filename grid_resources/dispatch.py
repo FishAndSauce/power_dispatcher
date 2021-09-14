@@ -1,16 +1,25 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Union, Tuple
-
+from typing import List, Tuple, Dict, Type
 import pandas as pd
 
-from grid_resources.dispatchable_generator_technologies import Generator
-from grid_resources.storage_technologies import Storage
+from grid.deployment_optimisers import AssetGroupOptimiser, MeritOrderOptimiser
+from grid_resources.technologies import Asset
 
 
 @dataclass
-class RankedDeployment(ABC):
-    ranked_installations: List[Union[Generator, Storage]]
+class RankedAssetGroup(ABC):
+    """ Collection of Assets with ranked dispatch order
+    """
+    asset_rank: List[Asset]
+    optimiser: AssetGroupOptimiser
+
+    @property
+    def asset_dict(self) -> Dict[str, Asset]:
+        return {a.name: a for a in self.asset_rank}
+
+    def rank_assets(self):
+        self.asset_rank = self.optimiser.optimise(self.asset_rank)
 
     def dispatch(
             self,
@@ -19,7 +28,7 @@ class RankedDeployment(ABC):
             log_hourly_cost: bool = False,
             dispatch_logger=None
     ):
-        for installation in self.ranked_installations:
+        for installation in self.asset_rank:
             dispatch = installation.dispatch(
                 dispatch_logger.residual_demand
             )
@@ -51,29 +60,45 @@ class RankedDeployment(ABC):
     def from_dataframe(df: pd.DataFrame):
         pass
 
-    def installation_details(
+    def assets_to_dataframe(
             self,
-            details: List[str] = None
     ) -> pd.DataFrame:
-        installed_dict = [
-            g.installation_details(details)
-            for g in self.ranked_installations
-        ]
-        installed = pd.DataFrame(installed_dict)
-        installed['rank'] = installed.index + 1
-        return installed
+        assets = pd.DataFrame(self.asset_dict)
+        assets['rank'] = assets.index + 1
+        return assets
+
+    def update_capacities(self, capacities: dict):
+        for gen, new_capacity in capacities.items():
+            self.asset_dict[gen] = new_capacity
+
+    def total_capacity(self):
+        return sum([
+            t.capacity
+            for t in self.asset_rank
+        ])
 
 
 @dataclass
-class RankedDeploymentGroup:
-    generators: RankedDeployment
-    storages: RankedDeployment
-    passive_generators: RankedDeployment
+class AssetGroups:
+    generators: RankedAssetGroup
+    storages: RankedAssetGroup
+    passive_generators: RankedAssetGroup
+    optimiser: AssetGroupOptimiser
     specified_deployment_order: Tuple[str] = ('passive_generators', 'storages', 'generators')
-    deployment_order = None
+    deployment_order: List[RankedAssetGroup] = None
 
     def __post_init__(self):
         self.deployment_order = list([
             getattr(self, tech)
             for tech in self.specified_deployment_order
         ])
+
+    def assets_to_dataframe(self):
+        return pd.concat(
+            [assets.assets_to_dataframe()
+             for assets in self.deployment_order],
+            axis=1
+        )
+    def optimise_groups(self):
+        for asset_group in self.deployment_order:
+            asset_group.rank_assets()

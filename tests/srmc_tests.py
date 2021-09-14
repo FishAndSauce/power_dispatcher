@@ -112,7 +112,7 @@ portfolio = Portfolio.build_portfolio(
     fuel_markets,
 )
 
-print(portfolio.installation_details())
+print(portfolio.assets_to_dataframe())
 # portfolio.plot_ldc()
 # portfolio.dispatch()
 # portfolio.plot_dispatch()

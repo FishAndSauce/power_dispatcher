@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from grid.deployment_optimisers import DeploymentOptimiser, ShortRunMarginalCostOptimiser
+from grid.deployment_optimisers import AssetGroupOptimiser, ShortRunMarginalCostOptimiser
 from grid.portfolios import ShortRunMarginalCostPortfolio
 from grid_resources.curves import AnnualCurve
 from grid_resources.commodities import Markets
 from grid_resources.passive_generator_technologies import PassiveResources
 
 from grid_resources.technologies import (
-    AssetOptions,
     RankedAssets,
     Asset,
 )
+from grid_resources.dispatch import AssetOptions
 
 
 @dataclass
@@ -91,9 +91,9 @@ class SRMCScenarioManager:
     @property
     def all_technologies_list(self):
         return \
-            self.generators.technology_list() \
-            + self.storages.technology_list() \
-            + self.passive_generators.technology_list()
+            self.generators.asset_list \
+            + self.storages.asset_list \
+            + self.passive_generators.asset_list
 
     @property
     def all_technologies_dict(self) -> Dict[str, Asset]:
@@ -102,13 +102,6 @@ class SRMCScenarioManager:
             **self.storages.options,
             **self.passive_generators.options,
         }
-
-    def optimise_deployments(self):
-        return self.optimiser.optimise(
-            self.generators,
-            self.storages,
-            self.passive_generators
-        )
 
     def build_portfolio(self):
         ranked_deployments = self.optimise_deployments()

@@ -1,19 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Type, List, Union, Dict
+from typing import List, Union
 from abc import ABC, abstractmethod
 import numpy as np
-import pandas as pd
-
-from grid_resources.commodities import Emissions
-
-
-@dataclass
-class EmissionsCharacteristics:
-    emissions_rate: float
-    rate_units: str
-    tariff: Emissions
 
 
 @dataclass
@@ -93,39 +83,10 @@ class Asset(ABC):
     ) -> np.ndarray:
         pass
 
-    def installation_details(
+    def asset_details(
             self,
             details: List[str] = None
     ) -> dict:
         if not details:
             details = ['name', 'technology', 'capacity']
         return {detail: getattr(self, detail) for detail in details}
-
-
-@dataclass
-class RankedAssets:
-    """ """
-    asset_rank: List[Asset]
-
-
-@dataclass
-class AssetOptions:
-    options: Dict[str, Asset]
-
-    def update_capacities(self, capacities: dict):
-        for gen, new_capacity in capacities.items():
-            self.options[gen] = new_capacity
-
-    def technology_list(self):
-        return list([tech for tech in self.options.values])
-
-    def ordered_list(self, order: List[str]) -> RankedAssets:
-        return RankedAssets(
-            list([self.options[name] for name in order])
-        )
-
-    def total_capacity(self):
-        return sum([
-            t.capacity
-            for t in self.options.values()
-        ])

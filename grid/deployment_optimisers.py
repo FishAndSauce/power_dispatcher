@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 
 from grid_resources.curves import AnnualCurve
-from grid_resources.dispatch import RankedDeploymentGroup, RankedDeployment
+from grid_resources.dispatch import RankedAssetGroup
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
-from grid_resources.technologies import AssetOptions, AssetOptions
+from grid_resources.technologies import Asset
 
 
 def idx(columns, name):
@@ -25,28 +25,28 @@ def drop_tuple_if_out_of_bounds(
 
 
 @dataclass
-class DeploymentOptimiser(ABC):
+class AssetGroupOptimiser(ABC):
     name: str
 
     @staticmethod
     @abstractmethod
     def optimise(
-            generators: AssetOptions,
-    ) -> RankedGeneratorDeployment:
+            assets: List[Asset],
+    ) -> List[Asset]:
         pass
 
 
 @dataclass
-class MeritOrderOptimiser(DeploymentOptimiser):
+class MeritOrderOptimiser(AssetGroupOptimiser):
 
     @staticmethod
     def optimise(
-            generators: AssetOptions,
+            assets: AssetOptions,
             demand: AnnualCurve
     ) -> RankedGeneratorDeployment:
         
         ranker = pd.DataFrame.from_dict(
-            generators.options, 
+            assets.options,
             'index', 
             columns=['generator']
         )
@@ -58,9 +58,9 @@ class MeritOrderOptimiser(DeploymentOptimiser):
 
         # Find x intercepts, sorted descending by x value, between all
         # Find cost of each generators if run for the full period
-        for name, gen in generators.options.items():
+        for name, gen in assets.options.items():
             sorted_intercepts = sorted(
-                gen.intercept_x_vals(generators),
+                gen.intercept_x_vals(assets),
                 reverse=True,
                 key=itemgetter(1)
             )
@@ -106,7 +106,7 @@ class MeritOrderOptimiser(DeploymentOptimiser):
                 upper_bound,
                 lower_bound
             )
-            if next_rank > len(generators.options) + 1:
+            if next_rank > len(assets.options) + 1:
                 raise ValueError(f'There is probably a bug in this loop!'
                                  f'The number of ranks should not exceed '
                                  f'the number of generators')
@@ -127,10 +127,10 @@ class MeritOrderOptimiser(DeploymentOptimiser):
 
 
 @dataclass
-class ShortRunMarginalCostOptimiser(DeploymentOptimiser):
+class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
 
     @staticmethod
-    def rank_technologies(
+    def optimise(
             technology: AssetOptions,
             optimise_against: str,
     ):
@@ -147,20 +147,20 @@ class ShortRunMarginalCostOptimiser(DeploymentOptimiser):
             for t in technology.options.values()
         ]
         ranker.sort_values('short_run_marginal_cost', inplace=True)
-        return RankedDeployment(ranker['generator'].to_list())
+        return RankedAssetGroup(ranker['generator'].to_list())
 
-    def optimise(
-            self,
-            generators: AssetOptions = None,
-            passive_generators: AssetOptions = None,
-            storages: AssetOptions = None
-    ) -> RankedDeploymentGroup:
-        ranked_generators = self.rank_technologies(generators, 'total_var_cost')
-        ranked_storages = self.rank_technologies(storages, 'levelised_cost')
-        ranked_passive_generators = self.rank_technologies(passive_generators, 'levelised_cost')
-
-        return RankedDeploymentGroup(
-            ranked_generators,
-            ranked_storages,
-            ranked_passive_generators,
-        )
+    # def optimise(
+    #         self,
+    #         generators: AssetOptions = None,
+    #         passive_generators: AssetOptions = None,
+    #         storages: AssetOptions = None
+    # ) -> AssetGroups:
+    #     ranked_generators = self.rank_technologies(generators, 'total_var_cost')
+    #     ranked_storages = self.rank_technologies(storages, 'levelised_cost')
+    #     ranked_passive_generators = self.rank_technologies(passive_generators, 'levelised_cost')
+    #
+    #     return AssetGroups(
+    #         ranked_generators,
+    #         ranked_storages,
+    #         ranked_passive_generators,
+    #     )

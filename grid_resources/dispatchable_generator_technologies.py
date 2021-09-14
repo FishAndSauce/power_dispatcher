@@ -7,10 +7,10 @@ import numpy as np
 
 from grid_resources.commodities import Fuel
 from grid_resources.technologies import (
-    EmissionsCharacteristics,
     GridTechnology,
     Asset
 )
+from grid_resources.emissions import EmissionsCharacteristics
 from utils.geometry import Line
 
 

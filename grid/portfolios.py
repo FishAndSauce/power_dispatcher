@@ -7,7 +7,7 @@ from typing import List
 
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
 from grid_resources.curves import AnnualCurve
-from grid_resources.dispatch import RankedDeploymentGroup
+from grid_resources.dispatch import AssetGroups
 from grid.results_logging import DispatchLogger
 from utils.geometry import Lines
 
@@ -40,7 +40,7 @@ class ScenarioLogger:
 @dataclass
 class Portfolio(ABC):
     demand: AnnualCurve
-    ranked_deployment_groups: RankedDeploymentGroup
+    asset_groups: AssetGroups
 
     def plot_ldc(self):
         self.demand.plot_ldc()
@@ -52,7 +52,7 @@ class Portfolio(ABC):
             log_hourly_cost: bool = False,
             logger: DispatchLogger = None
     ):
-        for deployment in self.ranked_deployment_groups.deployment_order:
+        for deployment in self.asset_groups.deployment_order:
             if deployment:
                 deployment.dispatch(
                     log_annual_costs,
@@ -61,13 +61,13 @@ class Portfolio(ABC):
                     logger,
                 )
 
-    def installation_details(self):
-        installations = [
+    def asset_details(self):
+        assets = [
             getattr(self, tech_type)
             for tech_type in self.deploy_order
             if getattr(self, tech_type)
         ]
-        details_frames = [i.installation_details() for i in installations]
+        details_frames = [i.assets_to_dataframe() for i in installations]
         return pd.concat(
             details_frames,
             axis=1
