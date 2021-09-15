@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from grid.deployment_optimisers import AssetGroupOptimiser, ShortRunMarginalCostOptimiser
 from grid.portfolios import ShortRunMarginalCostPortfolio
 from grid_resources.curves import AnnualCurve
 from grid_resources.commodities import Markets
@@ -11,7 +10,7 @@ from grid_resources.technologies import (
     RankedAssets,
     Asset,
 )
-from grid_resources.dispatch import AssetOptions
+from grid.dispatch_optimisation import AssetOptions, ShortRunMarginalCostOptimiser
 
 
 @dataclass

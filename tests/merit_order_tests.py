@@ -2,7 +2,7 @@ import pandas as pd
 
 from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
-from grid.deployment_optimisers import MeritOrderOptimiser
+from grid.dispatch_optimisation import MeritOrderOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology
 from grid_resources.commodities import Fuel, StaticPrice, Markets, Emissions
 from grid_resources.curves import AnnualCurve

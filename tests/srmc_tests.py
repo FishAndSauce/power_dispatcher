@@ -1,15 +1,12 @@
 import pandas as pd
-from matplotlib import pyplot as plt
 
-from grid_resources.dispatch import RankedGeneratorDeployment
+from grid.dispatch_optimisation import ShortRunMarginalCostOptimiser
 from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
-from grid.deployment_optimisers import ShortRunMarginalCostOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology, \
     Generator
 from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
 from grid_resources.curves import StochasticChoiceAnnualCurve
-from grid_resources.passive_generator_technologies import PassiveGenerator
 
 bucket = s3BucketManager('jw-modelling')
 folders = ['colombia-portfolio-inputs']

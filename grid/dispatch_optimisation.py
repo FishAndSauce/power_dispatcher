@@ -1,0 +1,249 @@
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from operator import itemgetter
+from typing import List, Tuple, Dict, Type
+
+import numpy as np
+import pandas as pd
+
+from grid_resources.curves import AnnualCurve
+from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
+from grid_resources.technologies import Asset
+
+
+def idx(columns, name):
+    return list(columns).index(name)
+
+
+def drop_tuple_if_out_of_bounds(
+        arr: List[Tuple[GeneratorTechnology, float]],
+        upper_bound: float,
+        lower_bound: float
+):
+    return list([x for x in arr if lower_bound < x[1] < upper_bound])
+
+
+@dataclass
+class AssetGroupOptimiser(ABC):
+    name: str
+
+    @staticmethod
+    @abstractmethod
+    def optimise(
+            *args,
+            **kwargs
+    ) -> List[Asset]:
+        pass
+
+
+# @dataclass
+# class MeritOrderOptimiser(AssetGroupOptimiser):
+#
+#     @staticmethod
+#     def optimise(
+#             assets: AssetOptions,
+#             demand: AnnualCurve
+#     ) -> RankedGeneratorDeployment:
+#
+#         ranker = pd.DataFrame.from_dict(
+#             assets.options,
+#             'index',
+#             columns=['generator']
+#         )
+#         ranker['rank'] = np.nan
+#         ranker['deploy_at'] = np.nan
+#         ranker['intercepts'] = np.nan
+#         ranker['max_duration_cost'] = np.nan
+#         ranker['ranked'] = False
+#
+#         # Find x intercepts, sorted descending by x value, between all
+#         # Find cost of each generators if run for the full period
+#         for name, gen in assets.options.items():
+#             sorted_intercepts = sorted(
+#                 gen.intercept_x_vals(assets),
+#                 reverse=True,
+#                 key=itemgetter(1)
+#             )
+#             ranker.at[name, 'intercepts'] = sorted_intercepts
+#             ranker.at[name, 'max_duration_cost'] = \
+#                 gen.get_period_cost(demand.periods)
+#         ranker.sort_values('max_duration_cost', inplace=True)
+#
+#         # Set gen with lowest max duration cost as 1 in rank column
+#         # and set to deploy at any capacity > 0.0
+#         ranker.iloc[0, idx(ranker.columns, "rank")] = 1
+#         ranker.iloc[0, idx(ranker.columns, "ranked")] = True
+#         ranker.iloc[0, idx(ranker.columns, "deploy_at")] = 0.0
+#         next_rank = 1
+#         # Traverse the break-even envelope, starting at rank 1, to rank each
+#         # each generator according to x value of break even points
+#         upper_bound = demand.periods
+#         lower_bound = 0.0
+#         intercepts = drop_tuple_if_out_of_bounds(
+#             ranker.iloc[0].loc["intercepts"],
+#             upper_bound,
+#             lower_bound
+#         )
+#         next_gen = ranker.iloc[0, idx(ranker.columns, "generator")]
+#         while intercepts:
+#             # Get next intercept and finalise df data for next_step
+#             next_x = intercepts[0][1]
+#             demand_at_x = demand.ldc.find_y_at_x(next_x)
+#             ranker.at[next_gen.name, "unit_capacity"] = \
+#                 demand_at_x - ranker.at[next_gen.name, "deploy_at"]
+#
+#             # Move on to generator at next intercept
+#             next_rank += 1
+#             next_gen = intercepts[0][0]
+#             upper_bound = next_x
+#             # Set next generator rank
+#             ranker.at[next_gen.name, "rank"] = next_rank
+#             ranker.at[next_gen.name, "ranked"] = True
+#             ranker.at[next_gen.name, "deploy_at"] = demand_at_x
+#             # get next list of intercepts
+#             intercepts = drop_tuple_if_out_of_bounds(
+#                 ranker.loc[next_gen.name, "intercepts"],
+#                 upper_bound,
+#                 lower_bound
+#             )
+#             if next_rank > len(assets.options) + 1:
+#                 raise ValueError(f'There is probably a bug in this loop!'
+#                                  f'The number of ranks should not exceed '
+#                                  f'the number of generators')
+#         # finalise
+#         ranker.at[next_gen.name, "unit_capacity"] = \
+#             demand.peak - ranker.at[next_gen.name, "deploy_at"]
+#
+#         ranker = ranker[ranker['ranked']]
+#         ranker.sort_values('rank', inplace=True)
+#         ranker['capacity'] = ranker['unit_capacity'] * demand.peak
+#
+#         gen_list = ranker.apply(lambda x: Generator(
+#             x['generator'].name,
+#             x['capacity'],
+#             x['generator']
+#         ), axis=1).to_list()
+#         return RankedGeneratorDeployment(gen_list)
+
+
+@dataclass
+class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
+
+    @staticmethod
+    def optimise(
+            group: RankedAssetGroup,
+            optimise_on: str,
+    ):
+        if not group:
+            return None
+
+        ranker = pd.DataFrame.from_dict(
+            group.asset_dict,
+            'index',
+            columns=['technology']
+        )
+        ranker[optimise_on] = [
+            getattr(t.technology, optimise_on)
+            for t in group.asset_rank
+        ]
+        ranker.sort_values(optimise_on, inplace=True)
+        return RankedAssetGroup(ranker['generator'].to_list())
+
+
+@dataclass
+class RankedAssetGroup(ABC):
+    """ Collection of Assets with ranked dispatch order
+    """
+    asset_rank: List[Asset]
+    optimise_on: str = None
+
+    @property
+    def asset_dict(self) -> Dict[str, Asset]:
+        return {a.name: a for a in self.asset_rank}
+
+    def rank_assets(self, optimiser: AssetGroupOptimiser):
+        self.asset_rank = optimiser.optimise(self.asset_rank, self.optimise_on)
+
+    def dispatch(
+            self,
+            log_annual_costs: bool = False,
+            log_levelized_cost: bool = False,
+            log_hourly_cost: bool = False,
+            dispatch_logger=None
+    ):
+        for installation in self.asset_rank:
+            dispatch = installation.dispatch(
+                dispatch_logger.residual_demand
+            )
+            dispatch_logger.log_dispatch(
+                dispatch,
+                installation.name
+            )
+            if log_annual_costs:
+                dispatch_logger.log_annual_dispatch_cost(
+                    installation.annual_dispatch_cost(dispatch),
+                    installation.name
+                )
+            if log_levelized_cost:
+                dispatch_logger.log_levelized_cost(
+                    installation.levelized_cost(
+                        dispatch,
+                    ),
+                    installation.name
+                )
+            if log_hourly_cost:
+                dispatch_logger.log.hourly_costs(
+                    installation.hourly_dispatch_cost(
+                        dispatch
+                    ),
+                    installation.name
+                )
+
+    @staticmethod
+    def from_dataframe(df: pd.DataFrame):
+        pass
+
+    def assets_to_dataframe(
+            self,
+    ) -> pd.DataFrame:
+        assets = pd.DataFrame(self.asset_dict)
+        assets['rank'] = assets.index + 1
+        return assets
+
+    def update_capacities(self, capacities: dict):
+        for gen, new_capacity in capacities.items():
+            self.asset_dict[gen] = new_capacity
+
+    def total_capacity(self):
+        return sum([
+            t.capacity
+            for t in self.asset_rank
+        ])
+
+
+@dataclass
+class AssetGroups:
+    generators: RankedAssetGroup
+    storages: RankedAssetGroup
+    passive_generators: RankedAssetGroup
+    specified_deployment_order: Tuple[str] = ('passive_generators', 'storages', 'generators')
+    deployment_order: List[RankedAssetGroup] = None
+
+    def __post_init__(self):
+        self.deployment_order = list([
+            getattr(self, tech)
+            for tech in self.specified_deployment_order
+        ])
+
+    def assets_to_dataframe(self):
+        return pd.concat(
+            [assets.assets_to_dataframe()
+             for assets in self.deployment_order],
+            axis=1
+        )
+
+    def optimise_groups(self, optimiser: AssetGroupOptimiser):
+        for asset_group in self.deployment_order:
+            asset_group.rank_assets(optimiser)
