@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from grid_resources.curves import AnnualCurve
+from grid_resources.curves import StochasticAnnualCurve
 
 
 @dataclass
 class DispatchLog:
-    demand: AnnualCurve
+    demand: StochasticAnnualCurve
 
     def __post_init__(self):
         self.dispatch = pd.DataFrame(
@@ -26,7 +26,7 @@ class DispatchLog:
 
 @dataclass
 class DispatchLogger:
-    demand: AnnualCurve
+    demand: StochasticAnnualCurve
     residual_demand: np.ndarray = None
     rank: list = None
 

@@ -215,3 +215,10 @@ class CorrelatedDistributionModel(StochasticModel):
                 self.correlated_lognormal_samples(number_samples).flatten(),
                 index=self.data_names
             )
+
+
+@dataclass
+class StochasticResource(ABC):
+    @abstractmethod
+    def refresh(self):
+        pass

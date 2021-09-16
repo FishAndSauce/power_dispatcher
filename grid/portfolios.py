@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from typing import List
 
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology
-from grid_resources.curves import AnnualCurve
-from grid.dispatch_optimisation import AssetGroups
+from grid_resources.curves import StochasticAnnualCurve
+from grid.asset_group_optimisation import AssetGroups
 from grid.results_logging import DispatchLogger
 from utils.geometry import Lines
 
@@ -39,7 +39,7 @@ class ScenarioLogger:
 
 @dataclass
 class Portfolio(ABC):
-    demand: AnnualCurve
+    demand: StochasticAnnualCurve
     asset_groups: AssetGroups
 
     def plot_ldc(self):

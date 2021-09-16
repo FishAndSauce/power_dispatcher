@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from typing import List, Type, Dict
 import pandas as pd
 
-from grid_resources.dynamics import DynamicResource
-from statistics.stochastics import CorrelatedDistributionModel
+from statistics.stochastics import CorrelatedDistributionModel, StochasticResource
 
 
 class Validator:
@@ -80,7 +79,7 @@ class PriceCorrelation(PriceModel):
 
 
 @dataclass
-class Markets(DynamicResource):
+class Markets(StochasticResource):
     market_prices: List[PriceModel]
 
     def refresh(self):

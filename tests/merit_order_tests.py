@@ -2,10 +2,10 @@ import pandas as pd
 
 from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
-from grid.dispatch_optimisation import MeritOrderOptimiser
+from grid.asset_group_optimisation import MeritOrderOptimiser
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnoEconomicProperties, GeneratorTechnology
 from grid_resources.commodities import Fuel, StaticPrice, Markets, Emissions
-from grid_resources.curves import AnnualCurve
+from grid_resources.curves import StochasticAnnualCurve
 from matplotlib import pyplot as plt
 from time import time
 
@@ -24,7 +24,7 @@ coal_gas_diesel_monthly = bucket.s3_csv_to_df(folders, coal_gas_diesel_data_fn)
 
 emissions_tariff = Emissions('carbon_price', 100, '$ / tonne')
 interest_rate = 0.03
-demand = AnnualCurve(
+demand = StochasticAnnualCurve(
     'test',
     'MWh',
     pd.Series(demand['demand'], index=range(len(demand['demand'])))

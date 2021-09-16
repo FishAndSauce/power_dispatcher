@@ -4,17 +4,17 @@ from typing import Union, List
 
 import numpy as np
 
-from grid_resources.dynamics import DynamicResource
+from statistics.stochastics import StochasticResource
 from grid_resources.technologies import (
     Asset,
     GridTechnology,
 )
-from grid_resources.curves import AnnualCurve
+from grid_resources.curves import StochasticAnnualCurve
 
 
 @dataclass
-class PassiveResources(DynamicResource):
-    resources: List[AnnualCurve]
+class PassiveResources(StochasticResource):
+    resources: List[StochasticAnnualCurve]
 
     def refresh(self):
         for resource in self.resources:
@@ -34,7 +34,7 @@ class PassiveTechnology(GridTechnology):
 @dataclass
 class PassiveGenerator(Asset):
     technology: PassiveTechnology
-    passive_resource: AnnualCurve
+    passive_resource: StochasticAnnualCurve
     constraint: Union[float, np.ndarray] = None
 
     def dispatch(

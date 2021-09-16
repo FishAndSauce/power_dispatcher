@@ -8,8 +8,7 @@ from typing import List, Any
 import calendar
 from datetime import date, datetime
 
-from grid_resources.dynamics import DynamicResource
-from statistics.stochastics import RandomArrayChoiceModel, StochasticModel, RandomWindowChoiceModel
+from statistics.stochastics import RandomArrayChoiceModel, StochasticModel, RandomWindowChoiceModel, StochasticResource
 
 
 @dataclass
@@ -65,7 +64,6 @@ class StochasticWindowAnnualCurveModel(StochasticAnnualCurveModel):
             sample_data=sample_data,
             stochastic_model=stochastic_model
         )
-
 
 
 @dataclass
@@ -176,10 +174,14 @@ class DurationCurve:
 
 
 @dataclass
-class AnnualCurve(DynamicResource):
+class StochasticAnnualCurve(StochasticResource):
+    """ Annual time series whose values are generated stochastically
+    by some StochasticAnnualCurveModel
+    """
     name: str
     units: str
     data: pd.Series
+    stochastic_model: StochasticAnnualCurveModel
 
     def __post_init__(self):
         Validator.not_none(self.data, 'data')
@@ -218,7 +220,10 @@ class AnnualCurve(DynamicResource):
 
 
 @dataclass
-class StochasticWindowAnnualCurve(AnnualCurve):
+class StochasticWindowAnnualCurve(StochasticAnnualCurve):
+    """ Annual time series whose values are generated stochastically
+    by randomly slicing from a multi-year sample data
+    """
     stochastic_model: StochasticWindowAnnualCurveModel
     _direct_instantiation: bool = True
 
@@ -251,7 +256,10 @@ class StochasticWindowAnnualCurve(AnnualCurve):
 
 
 @dataclass
-class StochasticChoiceAnnualCurve(AnnualCurve):
+class StochasticChoiceAnnualCurve(StochasticAnnualCurve):
+    """Annual time series whose values are generated stochastically
+    by randomly selecting one of a selection of arrays wchi each represent a single year
+    """
     stochastic_model: StochasticChoiceAnnualCurveModel = None
     _direct_instantiation: bool = True
 

@@ -6,6 +6,19 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
+class Validator:
+    @staticmethod
+    def is_ratio(value: float, value_name: str):
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f'{value_name} must be between 0.0 and 1.0')
+
+    @staticmethod
+    def cappable_less_than_capacity(cappable, capacity):
+        if cappable > capacity:
+            raise ValueError(f'Cappable capacity must be less than'
+                             f'capacity')
+
+
 @dataclass
 class GridTechnology(ABC):
     """ Power generation/storage technology with techno-economic data
@@ -50,11 +63,18 @@ class GridTechnology(ABC):
 class Asset(ABC):
     """ Installed asset(or aggregation of identical assets), of specific technology type,
     capable of power dispatch (including active and passive dispatch)
-     """
+    """
     name: str
     capacity: float
     technology: GridTechnology
     constraint: Union[float, np.ndarray]
+    cappable_capacity: float
+
+    def __post_init__(self):
+        Validator.cappable_less_than_capacity(
+            self.cappable_capacity,
+            self.capacity
+        )
 
     @abstractmethod
     def dispatch(

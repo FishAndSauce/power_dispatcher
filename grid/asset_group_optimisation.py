@@ -2,15 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from operator import itemgetter
-from typing import List, Tuple, Dict, Type
+from typing import List, Tuple, Dict
 
-import numpy as np
 import pandas as pd
 
-from grid_resources.curves import AnnualCurve
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
 from grid_resources.technologies import Asset
+from scenarios.constraints import CapacityCapper
 
 
 def idx(columns, name):
@@ -163,8 +161,22 @@ class RankedAssetGroup(ABC):
     def asset_dict(self) -> Dict[str, Asset]:
         return {a.name: a for a in self.asset_rank}
 
+    @property
+    def asset_name_list(self) -> List[str]:
+        return list([a.name for a in self.asset_rank])
+
+    @property
+    def total_capacity(self):
+        return sum([
+            t.capacity
+            for t in self.asset_rank
+        ])
+
     def rank_assets(self, optimiser: AssetGroupOptimiser):
-        self.asset_rank = optimiser.optimise(self.asset_rank, self.optimise_on)
+        self.asset_rank = optimiser.optimise(
+            self.asset_rank,
+            self.optimise_on
+        )
 
     def dispatch(
             self,
@@ -216,26 +228,80 @@ class RankedAssetGroup(ABC):
         for gen, new_capacity in capacities.items():
             self.asset_dict[gen] = new_capacity
 
-    def total_capacity(self):
-        return sum([
-            t.capacity
-            for t in self.asset_rank
-        ])
-
 
 @dataclass
 class AssetGroups:
     generators: RankedAssetGroup
     storages: RankedAssetGroup
     passive_generators: RankedAssetGroup
+    nominal_capacity_cap: float
+    optimiser: ShortRunMarginalCostOptimiser
+    capacity_capper: CapacityCapper
     specified_deployment_order: Tuple[str] = ('passive_generators', 'storages', 'generators')
-    deployment_order: List[RankedAssetGroup] = None
 
-    def __post_init__(self):
-        self.deployment_order = list([
+
+    @property
+    def all_assets_name_list(self):
+        return \
+            self.generators.asset_name_list \
+            + self.storages.asset_name_list \
+            + self.passive_generators.asset_name_list
+
+    @property
+    def all_assets_list(self):
+        return \
+            self.generators.asset_rank \
+            + self.storages.asset_rank \
+            + self.passive_generators.asset_rank
+
+    @property
+    def all_assets_dict(self) -> Dict[str, Asset]:
+        return {
+            **self.generators.asset_dict,
+            **self.storages.asset_dict,
+            **self.passive_generators.asset_dict,
+        }
+
+    @property
+    def deployment_order(self):
+        return list([
             getattr(self, tech)
             for tech in self.specified_deployment_order
         ])
+
+    @property
+    def total_capacity(self):
+        return sum([
+            self.generators.total_capacity,
+            self.storages.total_capacity,
+            self.passive_generators.total_capacity,
+        ])
+
+    @property
+    def capacity_exceedance(self):
+        return max(
+            0.0,
+            self.total_capacity - self.nominal_capacity_cap
+        )
+
+    def cap_capacities(
+        self,
+    ):
+        self.capacity_capper.cap(self.capacity_exceedance)
+
+    def update_capacities(
+            self,
+            generators: dict,
+            storages: dict,
+            passive_generators: dict,
+    ):
+        if generators:
+            self.generators.update_capacities(generators)
+        if storages:
+            self.storages.update_capacities(storages)
+        if passive_generators:
+            self.passive_generators.update_capacities(passive_generators)
+        self.capacity_capper.cap(self.capacity_exceedance)
 
     def assets_to_dataframe(self):
         return pd.concat(
@@ -244,6 +310,6 @@ class AssetGroups:
             axis=1
         )
 
-    def optimise_groups(self, optimiser: AssetGroupOptimiser):
+    def optimise_groups(self):
         for asset_group in self.deployment_order:
-            asset_group.rank_assets(optimiser)
+            asset_group.rank_assets(self.optimiser)
