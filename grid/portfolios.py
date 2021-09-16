@@ -8,7 +8,7 @@ from typing import List
 from grid_resources.dispatchable_generator_technologies import GeneratorTechnology
 from grid_resources.curves import StochasticAnnualCurve
 from grid.asset_group_optimisation import AssetGroups
-from grid.results_logging import DispatchLogger
+from grid.dispatch import StochasticDispatchManager
 from utils.geometry import Lines
 
 optimal_install_df_columns = [
@@ -50,9 +50,9 @@ class Portfolio(ABC):
             log_annual_costs: bool = False,
             log_lcoe: bool = False,
             log_hourly_cost: bool = False,
-            logger: DispatchLogger = None
+            logger: StochasticDispatchManager = None
     ):
-        for deployment in self.asset_groups.deployment_order:
+        for deployment in self.asset_groups.ordered_deployment:
             if deployment:
                 deployment.dispatch(
                     log_annual_costs,

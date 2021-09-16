@@ -155,18 +155,4 @@ class Storage(Asset):
             total_dispatch_cost = self.annual_dispatch_cost(dispatch)
         return total_dispatch_cost / dispatch.sum()
 
-    def hourly_dispatch_cost(
-            self,
-            dispatch: np.ndarray,
-            total_dispatch_cost: float = None,
-            levelized_cost: float = None,
-    ) -> np.ndarray:
-        """ Get hourly dispatch cost based on lcoe
-        """
-        if not total_dispatch_cost:
-            total_dispatch_cost = self.annual_dispatch_cost(dispatch)
-        if not levelized_cost:
-            levelized_cost = self.levelized_cost(dispatch, total_dispatch_cost)
-        return dispatch * levelized_cost
-
 

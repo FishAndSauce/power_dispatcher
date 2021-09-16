@@ -6,7 +6,9 @@ from typing import List, Tuple, Dict
 
 import pandas as pd
 
-from grid_resources.dispatchable_generator_technologies import GeneratorTechnology, Generator
+from grid.dispatch import DispatchLog
+from grid_resources.curves import StochasticAnnualCurve
+from grid_resources.dispatchable_generator_technologies import GeneratorTechnology
 from grid_resources.technologies import Asset
 from scenarios.constraints import CapacityCapper
 
@@ -151,7 +153,7 @@ class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
 
 
 @dataclass
-class RankedAssetGroup(ABC):
+class RankedAssetGroup:
     """ Collection of Assets with ranked dispatch order
     """
     asset_rank: List[Asset]
@@ -180,42 +182,27 @@ class RankedAssetGroup(ABC):
 
     def dispatch(
             self,
-            log_annual_costs: bool = False,
-            log_levelized_cost: bool = False,
-            log_hourly_cost: bool = False,
-            dispatch_logger=None
+            dispatch_logger: DispatchLog,
+            log_annual_costs: bool = True,
+            log_levelized_cost: bool = True,
     ):
-        for installation in self.asset_rank:
-            dispatch = installation.dispatch(
-                dispatch_logger.residual_demand
-            )
-            dispatch_logger.log_dispatch(
-                dispatch,
-                installation.name
+        annual_costs = None
+        levelized_cost = None
+        for asset in self.asset_rank:
+            dispatch = asset.dispatch(
+                dispatch_logger.log['residual_demand']
             )
             if log_annual_costs:
-                dispatch_logger.log_annual_dispatch_cost(
-                    installation.annual_dispatch_cost(dispatch),
-                    installation.name
-                )
+                annual_costs = asset.annual_dispatch_cost(dispatch),
             if log_levelized_cost:
-                dispatch_logger.log_levelized_cost(
-                    installation.levelized_cost(
-                        dispatch,
-                    ),
-                    installation.name
-                )
-            if log_hourly_cost:
-                dispatch_logger.log.hourly_costs(
-                    installation.hourly_dispatch_cost(
-                        dispatch
-                    ),
-                    installation.name
-                )
+                levelized_cost = asset.levelized_cost(dispatch)
 
-    @staticmethod
-    def from_dataframe(df: pd.DataFrame):
-        pass
+            dispatch_logger.log_dispatch(
+                dispatch_name=asset.name,
+                dispatch=dispatch,
+                annual_cost=annual_costs,
+                levelized_cost=levelized_cost
+            )
 
     def assets_to_dataframe(
             self,
@@ -238,7 +225,7 @@ class AssetGroups:
     optimiser: ShortRunMarginalCostOptimiser
     capacity_capper: CapacityCapper
     specified_deployment_order: Tuple[str] = ('passive_generators', 'storages', 'generators')
-
+    dispatch_logger: DispatchLog = None
 
     @property
     def all_assets_name_list(self):
@@ -263,7 +250,7 @@ class AssetGroups:
         }
 
     @property
-    def deployment_order(self):
+    def ordered_deployment(self) -> List[RankedAssetGroup]:
         return list([
             getattr(self, tech)
             for tech in self.specified_deployment_order
@@ -306,10 +293,26 @@ class AssetGroups:
     def assets_to_dataframe(self):
         return pd.concat(
             [assets.assets_to_dataframe()
-             for assets in self.deployment_order],
+             for assets in self.ordered_deployment],
             axis=1
         )
 
     def optimise_groups(self):
-        for asset_group in self.deployment_order:
+        for asset_group in self.ordered_deployment:
             asset_group.rank_assets(self.optimiser)
+
+    def dispatch(
+            self,
+            demand,
+            log_annual_costs: bool = True,
+            log_levelized_cost: bool = True,
+    ):
+        if not self.dispatch_logger:
+            self.dispatch_logger = DispatchLog(demand)
+        for asset_group in self.ordered_deployment:
+            asset_group.dispatch(
+                self.dispatch_logger,
+                log_annual_costs,
+                log_levelized_cost,
+            )
+
