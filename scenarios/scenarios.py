@@ -4,7 +4,7 @@ from constraints import CapacityConstraints
 from grid.portfolios import ShortRunMarginalCostPortfolio
 from grid_resources.curves import StochasticAnnualCurve
 from grid_resources.commodities import Markets
-from grid_resources.passive_generator_technologies import PassiveResources
+from grid_resources.passive_generators import PassiveResources
 
 from grid.asset_group_optimisation import ShortRunMarginalCostOptimiser, AssetGroups
 

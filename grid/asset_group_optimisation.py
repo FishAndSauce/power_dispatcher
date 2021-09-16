@@ -8,7 +8,7 @@ import pandas as pd
 
 from grid.dispatch import DispatchLog
 from grid_resources.curves import StochasticAnnualCurve
-from grid_resources.dispatchable_generator_technologies import GeneratorTechnology
+from grid_resources.generators import GeneratorTechnology
 from grid_resources.technologies import Asset
 from scenarios.constraints import CapacityCapper
 

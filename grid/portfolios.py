@@ -5,7 +5,7 @@ import pandas as pd
 from dataclasses import dataclass
 from typing import List
 
-from grid_resources.dispatchable_generator_technologies import GeneratorTechnology
+from grid_resources.generators import GeneratorTechnology
 from grid_resources.curves import StochasticAnnualCurve
 from grid.asset_group_optimisation import AssetGroups
 from grid.dispatch import StochasticDispatchManager
