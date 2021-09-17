@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Union, List
 
@@ -14,7 +14,16 @@ from resources.curves import StochasticAnnualCurve, StochasticComplementaryChoic
 
 @dataclass
 class PassiveResource(StochasticResource):
-    resource: StochasticAnnualCurve
+    data: np.ndarray = None
+
+    @abstractmethod
+    def refresh(self):
+        pass
+
+
+@dataclass
+class SimplePassiveResource(PassiveResource):
+    resource: StochasticAnnualCurve = None
     data: np.ndarray = None
 
     def refresh(self):
@@ -23,9 +32,9 @@ class PassiveResource(StochasticResource):
 
 
 @dataclass
-class CorrelatedPassiveResource(StochasticResource):
-    resource: StochasticComplementaryChoiceAnnualCurve
-    name: str
+class CorrelatedPassiveResource(PassiveResource):
+    resource: StochasticComplementaryChoiceAnnualCurve = None
+    name: str = None
     data: np.ndarray = None
 
     def refresh(self):
@@ -44,7 +53,6 @@ class PassiveResources(StochasticResource):
 
 @dataclass
 class PassiveTechnology(GridTechnology):
-    round_trip_efficiency: float
     levelized_cost: float = None
 
     @property
@@ -56,7 +64,7 @@ class PassiveTechnology(GridTechnology):
 class PassiveGenerator(Asset):
     technology: PassiveTechnology
     passive_resource: PassiveResource
-    constraint: Union[float, np.ndarray] = None
+    constraint: Union[float, np.ndarray, None] = None
 
     def dispatch(
             self,

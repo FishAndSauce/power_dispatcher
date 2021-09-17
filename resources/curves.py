@@ -211,7 +211,7 @@ class StochasticComplementaryChoiceAnnualCurveModel(StochasticAnnualCurveModel):
 
 
     @classmethod
-    def from_array(
+    def from_array_dict(
             cls,
             name: str,
             year: int,
@@ -272,17 +272,6 @@ class StochasticAnnualCurve(StochasticResource):
 
     @abstractmethod
     def refresh(self):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def from_array(
-        cls,
-        name,
-        units,
-        sample_data,
-        scale,
-    ):
         pass
 
 
@@ -382,7 +371,7 @@ class StochasticComplementaryChoiceAnnualCurve(StochasticAnnualCurve):
         self.data = self.stochastic_model.update()
 
     @classmethod
-    def from_array(
+    def from_array_dict(
             cls,
             name: str,
             units: str,
@@ -391,7 +380,7 @@ class StochasticComplementaryChoiceAnnualCurve(StochasticAnnualCurve):
             scale=1.0,
             strip_leap_days: bool = True
     ):
-        stochastic_model = StochasticComplementaryChoiceAnnualCurveModel.from_array(
+        stochastic_model = StochasticComplementaryChoiceAnnualCurveModel.from_array_dict(
             name,
             year,
             sample_data,
