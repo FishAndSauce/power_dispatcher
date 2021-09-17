@@ -66,8 +66,9 @@ class ScenarioManager:
                 self.portfolio.dispatch_logger.annual_cost_totals(),
             )
 
-    def monte_carlo_capacity_scenarios(
+    def monte_carlo_capacity_scenario(
             self,
+            scenario_name,
             nominal_capacities: dict,
             iterations: int = 100,
             log_stats: Tuple[str] = ('mean', 'std')
@@ -78,5 +79,5 @@ class ScenarioManager:
         updated_capacities = self.portfolio.asset_capacities()
         self.monte_carlo(updated_capacities, iterations)
         self.scenario_logger.log_scenario(
-            self.monte_carlo_logger.aggregated_statistics(log_stats),
+            self.monte_carlo_logger.aggregated_statistics(scenario_name, log_stats),
         )

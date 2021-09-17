@@ -108,15 +108,17 @@ class MonteCarloLog:
 
     def aggregated_statistics(
         self,
+        scenario_name: str,
         stats: Tuple[str] = ('mean, std')
     ):
+        scenario_name_s = pd.Series({'scenario_name': scenario_name})
         scenario_s = pd.Series(self.scenario)
         rows = []
         for stat in stats:
             stat_method = getattr(pd.DataFrame, stat)
             statistic_s = stat_method(self.log)
             stat_label_s = pd.Series({'statistic': stat})
-            rows.append(scenario_s.copy().append([stat_label_s, statistic_s]))
+            rows.append(scenario_s.copy().append([scenario_name_s, stat_label_s, statistic_s]))
         return pd.DataFrame(rows)
 
 
