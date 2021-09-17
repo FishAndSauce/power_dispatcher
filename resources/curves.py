@@ -4,7 +4,7 @@ import pandas as pd
 from dataclasses import dataclass
 from matplotlib import pyplot as plt
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import List, Any, Dict
 import calendar
 from datetime import date, datetime
 
@@ -12,7 +12,7 @@ from statistics.stochastics import (
     RandomArrayChoiceModel,
     StochasticModel,
     RandomWindowChoiceModel,
-    StochasticResource
+    StochasticResource, ComplementaryRandomArrayChoiceModel
 )
 
 
@@ -94,11 +94,17 @@ class DurationCurve:
         return DurationCurve(data)
 
 
-
 @dataclass
 class RandomAnnualCurveChoice(RandomArrayChoiceModel):
     def __post_init__(self):
         Validator.annual_hours(self.data)
+
+
+@dataclass
+class ComplementaryRandomCurveChoice(ComplementaryRandomArrayChoiceModel):
+    def __post_init__(self):
+        for data in self.data.values():
+            Validator.annual_hours(data)
 
 
 @dataclass
@@ -167,6 +173,49 @@ class StochasticChoiceAnnualCurveModel(StochasticAnnualCurveModel):
             name: str,
             year: int,
             sample_data: List[list],
+            scale=1.0,
+            strip_leap_days: bool = True
+    ):
+        Validator.standard_year(sample_data)
+        return cls(
+            sample_data=sample_data,
+            name=name,
+            year=year,
+            scale=scale,
+            strip_leap_days=strip_leap_days,
+            _direct_instantiation=False
+        )
+
+
+@dataclass
+class StochasticComplementaryChoiceAnnualCurveModel(StochasticAnnualCurveModel):
+    sample_data: Dict[str, List[list]] = None
+    name: str = None
+    year: int = None
+    scale: float = 1.0
+    strip_leap_days: bool = True
+
+    _direct_instantiation: bool = True
+
+    def __post_init__(self):
+        if self._direct_instantiation:
+            raise Exception(f'You may only instantiate this objects of this class'
+                            f'with class methods - e.g. from_array()')
+        self.stochastic_model = ComplementaryRandomArrayChoiceModel(self.sample_data)
+        self.update()
+
+    def update(
+            self,
+    ):
+        return self.stochastic_model.generate_samples()
+
+
+    @classmethod
+    def from_array(
+            cls,
+            name: str,
+            year: int,
+            sample_data: Dict[str, List[list]],
             scale=1.0,
             strip_leap_days: bool = True
     ):
@@ -301,6 +350,48 @@ class StochasticChoiceAnnualCurve(StochasticAnnualCurve):
             strip_leap_days: bool = True
     ):
         stochastic_model = StochasticChoiceAnnualCurveModel.from_array(
+            name,
+            year,
+            sample_data,
+            scale,
+            strip_leap_days,
+        )
+        return cls(
+            name,
+            units,
+            stochastic_model.update(),
+            stochastic_model,
+            _direct_instantiation=False
+        )
+
+
+@dataclass
+class StochasticComplementaryChoiceAnnualCurve(StochasticAnnualCurve):
+    """Annual time series whose values are generated stochastically
+    by randomly selecting one of a selection of arrays wchi each represent a single year
+    """
+    stochastic_model: StochasticComplementaryChoiceAnnualCurveModel = None
+    _direct_instantiation: bool = True
+
+    def __post_init__(self):
+        if self._direct_instantiation:
+            raise Exception(f'You may only instantiate this objects of this class'
+                            f'with class methods - e.g. from_array()')
+
+    def refresh(self):
+        self.data = self.stochastic_model.update()
+
+    @classmethod
+    def from_array(
+            cls,
+            name: str,
+            units: str,
+            year: int,
+            sample_data: Dict[str, List[list]],
+            scale=1.0,
+            strip_leap_days: bool = True
+    ):
+        stochastic_model = StochasticComplementaryChoiceAnnualCurveModel.from_array(
             name,
             year,
             sample_data,

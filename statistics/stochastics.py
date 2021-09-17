@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
-from typing import Type, List
+from typing import Type, List, Dict
 from scipy.stats import norm
 from scipy.linalg import cholesky
 from abc import ABC, abstractmethod
@@ -96,6 +96,28 @@ class RandomArrayChoiceModel(StochasticModel):
             return np.array(samples)
         else:
             return np.array(samples[0])
+
+
+@dataclass
+class ComplementaryRandomArrayChoiceModel(StochasticModel):
+    data: Dict[str, List[list]]
+
+    def generate_samples(self, number_samples=1) -> Dict[str, np.ndarray]:
+        random_idx = np.random.randint(
+            0,
+            len(self.data),
+            size=number_samples
+        )
+        sample_dict = {}
+        for name, data in self.data.items():
+            samples = []
+            for idx in random_idx:
+                samples.append(data[idx])
+            if len(samples) > 1:
+                sample_dict[name] = np.array(samples)
+            else:
+                sample_dict[name] = np.array(samples[0])
+        return sample_dict
 
 
 @dataclass

@@ -9,7 +9,28 @@ from resources.technologies import (
     Asset,
     GridTechnology,
 )
-from resources.curves import StochasticAnnualCurve
+from resources.curves import StochasticAnnualCurve, StochasticComplementaryChoiceAnnualCurve
+
+
+@dataclass
+class PassiveResource(StochasticResource):
+    resource: StochasticAnnualCurve
+    data: np.ndarray = None
+
+    def refresh(self):
+        self.resource.refresh()
+        self.data = self.resource.data.to_numpy()
+
+
+@dataclass
+class CorrelatedPassiveResource(StochasticResource):
+    resource: StochasticComplementaryChoiceAnnualCurve
+    name: str
+    data: np.ndarray = None
+
+    def refresh(self):
+        self.resource.refresh()
+        self.data = self.resource.data[self.name].to_numpy()
 
 
 @dataclass
@@ -34,7 +55,7 @@ class PassiveTechnology(GridTechnology):
 @dataclass
 class PassiveGenerator(Asset):
     technology: PassiveTechnology
-    passive_resource: StochasticAnnualCurve
+    passive_resource: PassiveResource
     constraint: Union[float, np.ndarray] = None
 
     def dispatch(
