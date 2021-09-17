@@ -8,7 +8,12 @@ from typing import List, Any
 import calendar
 from datetime import date, datetime
 
-from statistics.stochastics import RandomArrayChoiceModel, StochasticModel, RandomWindowChoiceModel, StochasticResource
+from statistics.stochastics import (
+    RandomArrayChoiceModel,
+    StochasticModel,
+    RandomWindowChoiceModel,
+    StochasticResource
+)
 
 
 @dataclass

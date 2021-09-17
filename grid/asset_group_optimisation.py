@@ -6,7 +6,7 @@ from typing import List, Tuple, Dict
 
 import pandas as pd
 
-from grid.dispatch import DispatchLog
+from grid.results_logging import DispatchLog
 from grid_resources.curves import StochasticAnnualCurve
 from grid_resources.generators import GeneratorTechnology
 from grid_resources.technologies import Asset
@@ -190,14 +190,14 @@ class RankedAssetGroup:
         levelized_cost = None
         for asset in self.asset_rank:
             dispatch = asset.dispatch(
-                dispatch_logger.log['residual_demand']
+                dispatch_logger.dispatch_log['residual_demand']
             )
             if log_annual_costs:
                 annual_costs = asset.annual_dispatch_cost(dispatch),
             if log_levelized_cost:
                 levelized_cost = asset.levelized_cost(dispatch)
 
-            dispatch_logger.log_dispatch(
+            dispatch_logger.log(
                 dispatch_name=asset.name,
                 dispatch=dispatch,
                 annual_cost=annual_costs,
@@ -278,16 +278,10 @@ class AssetGroups:
 
     def update_capacities(
             self,
-            generators: dict,
-            storages: dict,
-            passive_generators: dict,
+            assets: Dict[str, float]
     ):
-        if generators:
-            self.generators.update_capacities(generators)
-        if storages:
-            self.storages.update_capacities(storages)
-        if passive_generators:
-            self.passive_generators.update_capacities(passive_generators)
+        for name, capacity in assets.items():
+            self.all_assets_dict[name].capacity = capacity
         self.capacity_capper.cap(self.capacity_exceedance)
 
     def assets_to_dataframe(self):
@@ -315,4 +309,5 @@ class AssetGroups:
                 log_annual_costs,
                 log_levelized_cost,
             )
+
 

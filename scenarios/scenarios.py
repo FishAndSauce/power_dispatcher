@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from typing import Tuple
 
 from constraints import CapacityConstraints
-from grid.portfolios import ShortRunMarginalCostPortfolio
+from grid.results_logging import MonteCarloLog, ScenarioLogger
 from grid_resources.curves import StochasticAnnualCurve
 from grid_resources.commodities import Markets
 from grid_resources.passive_generators import PassiveResources
@@ -27,6 +28,9 @@ class ScenarioManager:
     portfolio: AssetGroups
     optimiser: ShortRunMarginalCostOptimiser
     constraints: CapacityConstraints
+    scenario_summary: dict = None
+    monte_carlo_logger: MonteCarloLog = None
+    scenario_logger: ScenarioLogger = None
 
     def refresh_constraints(self):
         self.constraints.refresh()
@@ -48,10 +52,30 @@ class ScenarioManager:
                 refresh = getattr(self, method)
                 refresh()
 
-    def update_scenario(
+    def monte_carlo(
+        self,
+        scenario: dict,
+        iterations: int = 100,
+    ):
+        if not self.monte_carlo_logger:
+            self.monte_carlo_logger = MonteCarloLog(scenario)
+        for simulation in range(iterations + 1):
+            self.refresh_all()
+            self.portfolio.dispatch(self.demand)
+            self.monte_carlo_logger.log_simulation(
+                self.portfolio.dispatch_logger.annual_cost_totals(),
+            )
+
+    def monte_carlo_scenarios(
             self,
             capacities: dict,
+            iterations: int = 100,
+            log_stats: Tuple[str] = ('mean', 'std')
     ):
-        # Change scenario data
-        if capacities:
-            self.portfolio.update_capacities(**capacities)
+        self.scenario_logger = ScenarioLogger()
+        self.scenario_summary = capacities
+        self.portfolio.update_capacities(capacities)
+        self.monte_carlo(capacities, iterations)
+        self.scenario_logger.log_scenario(
+            self.monte_carlo_logger.aggregated_statistics(log_stats),
+        )
