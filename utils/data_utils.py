@@ -1,20 +1,15 @@
 import boto3
-from boto3 import s3
 import json
 from io import StringIO, BytesIO
 import pandas as pd
 from dataclasses import dataclass
-from os.path import join
-from typing import Type
-
-from local_data.local_data import aws_credentials
 
 
 @dataclass
 class s3BucketManager:
     bucket: str
-    aws_id: str = aws_credentials['id']
-    aws_key: str = aws_credentials['access_key']
+    aws_id: str
+    aws_key: str
     
     @property
     def resource(self):
