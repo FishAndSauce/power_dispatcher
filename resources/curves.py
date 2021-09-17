@@ -224,6 +224,16 @@ class StochasticAnnualCurve(StochasticResource):
     def refresh(self):
         pass
 
+    @classmethod
+    @abstractmethod
+    def from_array(
+        cls,
+        name,
+        units,
+        sample_data,
+        scale,
+    ):
+        pass
 
 
 @dataclass

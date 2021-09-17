@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List
+import numpy as np
 
 from resources.curves import StochasticAnnualCurve
 from resources.technologies import Asset
@@ -24,7 +25,7 @@ class CapacityCapper:
         if exceedance > 0:
             for asset in self.cappable_assets:
                 capacity_displacement = min(
-                    asset.cappable_capacity,
+                    asset.cappable_capacity * asset.nameplate_capacity,
                     exceedance
                 )
                 asset.nameplate_capacity -= capacity_displacement
@@ -34,8 +35,40 @@ class CapacityCapper:
 
 
 @dataclass
+class CapacityConstraint(StochasticResource):
+    constraint_model: StochasticAnnualCurve
+    as_factor: bool
+
+    @property
+    def constraint(self):
+        return self.constraint_model.data
+
+    @classmethod
+    def from_array(
+        cls,
+        name,
+        units,
+        sample_data: np.ndarray,
+        factor,
+        scale=1.0
+    ):
+        return cls(
+            StochasticAnnualCurve.from_array(
+                name,
+                units,
+                sample_data,
+                scale,
+            ),
+            factor
+        )
+
+    def refresh(self):
+        self.constraint_model.refresh()
+
+
+@dataclass
 class CapacityConstraints(StochasticResource):
-    constraints: List[StochasticAnnualCurve]
+    constraints: List[CapacityConstraint]
 
     def refresh(self):
         for constraint in self.constraints:

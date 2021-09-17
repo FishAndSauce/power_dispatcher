@@ -11,6 +11,7 @@ from resources.technologies import (
     Asset
 )
 from resources.emissions import EmissionsCharacteristics
+from scenarios.constraints import CapacityConstraint
 from utils.geometry import Line
 
 
@@ -100,21 +101,24 @@ class GeneratorTechnology(GridTechnology):
 @dataclass(order=True)
 class Generator(Asset):
     technology: GeneratorTechnology
-    constraint: Union[float, np.ndarray] = None
+    constraint: CapacityConstraint = None
 
     def dispatch(
             self,
             demand: np.ndarray
     ) -> np.ndarray:
         if self.constraint:
-            constraint = np.clip(self.constraint, 0, self.firm_capacity)
+            constraint = self.constraint.constraint
+            if self.constraint.as_factor:
+                constraint = constraint * self.firm_capacity
+            ultimate_constraint = np.clip(constraint, 0, self.firm_capacity)
         else:
-            constraint = self.firm_capacity
+            ultimate_constraint = self.firm_capacity
 
         return np.clip(
             demand,
             0,
-            constraint
+            ultimate_constraint
         )
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
