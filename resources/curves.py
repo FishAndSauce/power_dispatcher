@@ -252,6 +252,7 @@ class StochasticWindowAnnualCurve(StochasticAnnualCurve):
     ):
         stochastic_model = StochasticWindowAnnualCurveModel.from_array(
             sample_data,
+            scale
         )
         return cls(
             name,
