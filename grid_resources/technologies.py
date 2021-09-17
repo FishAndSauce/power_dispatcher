@@ -65,7 +65,8 @@ class Asset(ABC):
     capable of power dispatch (including active and passive dispatch)
     """
     name: str
-    capacity: float
+    nameplate_capacity: float
+    firm_capacity_factor: float
     technology: GridTechnology
     constraint: Union[float, np.ndarray]
     cappable_capacity: float
@@ -73,8 +74,12 @@ class Asset(ABC):
     def __post_init__(self):
         Validator.cappable_less_than_capacity(
             self.cappable_capacity,
-            self.capacity
+            self.firm_capacity
         )
+
+    @property
+    def firm_capacity(self):
+        return self.nameplate_capacity * self.firm_capacity_factor
 
     @abstractmethod
     def dispatch(

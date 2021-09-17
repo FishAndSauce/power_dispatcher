@@ -27,7 +27,7 @@ class CapacityCapper:
                     asset.cappable_capacity,
                     exceedance
                 )
-                asset.capacity -= capacity_displacement
+                asset.firm_capacity -= capacity_displacement
                 exceedance -= capacity_displacement
                 if exceedance <= 0:
                     break

@@ -170,7 +170,7 @@ class RankedAssetGroup:
     @property
     def total_capacity(self):
         return sum([
-            t.capacity
+            t.firm_capacity
             for t in self.asset_rank
         ])
 
@@ -213,7 +213,7 @@ class RankedAssetGroup:
 
     def update_capacities(self, capacities: dict):
         for gen, new_capacity in capacities.items():
-            self.asset_dict[gen] = new_capacity
+            self.asset_dict[gen].nameplate_capacity = new_capacity
 
 
 @dataclass
@@ -281,7 +281,7 @@ class AssetGroups:
             assets: Dict[str, float]
     ):
         for name, capacity in assets.items():
-            self.all_assets_dict[name].capacity = capacity
+            self.all_assets_dict[name].nameplate_capacity = capacity
         self.capacity_capper.cap(self.capacity_exceedance)
 
     def assets_to_dataframe(self):

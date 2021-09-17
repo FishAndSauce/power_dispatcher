@@ -76,7 +76,7 @@ class Storage(Asset):
 
     @property
     def energy_capacity(self):
-        return self.capacity * self.hours_storage
+        return self.firm_capacity * self.hours_storage
 
     @property
     def depth_of_discharge(self) -> float:
@@ -110,7 +110,7 @@ class Storage(Asset):
         if energy < 0:
             energy_exchange = - min(
                 abs(energy),
-                self.capacity,
+                self.firm_capacity,
                 self.available_energy
             )
         else:
@@ -142,7 +142,7 @@ class Storage(Asset):
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
         return total_dispatch * self.technology.total_var_cost + \
-               self.capacity * self.technology.total_fixed_cost
+               self.firm_capacity * self.technology.total_fixed_cost
 
     def levelized_cost(
             self,

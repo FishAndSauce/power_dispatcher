@@ -55,7 +55,7 @@ class PassiveGenerator(Asset):
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
         return total_dispatch * self.technology.total_var_cost + \
-            self.capacity * self.technology.total_fixed_cost
+               self.firm_capacity * self.technology.total_fixed_cost
 
     def levelized_cost(
             self,
