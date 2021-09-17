@@ -1,6 +1,6 @@
 import pandas as pd
 
-from grid.asset_group_optimisation import ShortRunMarginalCostOptimiser
+from grid.asset_groups import ShortRunMarginalCostOptimiser
 from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
 from grid_resources.generators import GeneratorTechnology, Generator

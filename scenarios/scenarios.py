@@ -7,7 +7,7 @@ from grid_resources.curves import StochasticAnnualCurve
 from grid_resources.commodities import Markets
 from grid_resources.passive_generators import PassiveResources
 
-from grid.asset_group_optimisation import ShortRunMarginalCostOptimiser, AssetGroups
+from grid.asset_groups import ShortRunMarginalCostOptimiser, AssetGroups
 
 
 @dataclass
