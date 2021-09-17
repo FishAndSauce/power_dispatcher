@@ -57,17 +57,19 @@ class StochasticAnnualCurveModel(ABC):
 @dataclass
 class StochasticWindowAnnualCurveModel(StochasticAnnualCurveModel):
     stochastic_model: RandomWindowChoiceModel = None
+    scale: float = 1.0
     hours: int = 8760
 
     def update(self):
-        return self.stochastic_model.generate_samples(self.hours)
+        return self.scale * self.stochastic_model.generate_samples(self.hours)
 
     @classmethod
-    def from_array(cls, sample_data):
+    def from_array(cls, sample_data, scale: float = 1.0):
         stochastic_model = RandomWindowChoiceModel(sample_data)
         return cls(
             sample_data=sample_data,
-            stochastic_model=stochastic_model
+            stochastic_model=stochastic_model,
+            scale=scale
         )
 
 
@@ -249,7 +251,7 @@ class StochasticWindowAnnualCurve(StochasticAnnualCurve):
             scale=1.0,
     ):
         stochastic_model = StochasticWindowAnnualCurveModel.from_array(
-            sample_data
+            sample_data,
         )
         return cls(
             name,
