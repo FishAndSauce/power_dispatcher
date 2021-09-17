@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List
 
-from grid_resources.curves import StochasticAnnualCurve
-from grid_resources.technologies import Asset
+from resources.curves import StochasticAnnualCurve
+from resources.technologies import Asset
 from statistics.stochastics import StochasticResource
 
 

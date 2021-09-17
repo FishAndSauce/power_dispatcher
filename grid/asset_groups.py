@@ -7,9 +7,9 @@ from typing import List, Tuple, Dict
 import pandas as pd
 
 from grid.results_logging import DispatchLog
-from grid_resources.curves import StochasticAnnualCurve
-from grid_resources.generators import GeneratorTechnology
-from grid_resources.technologies import Asset
+from resources.curves import StochasticAnnualCurve
+from resources.generators import GeneratorTechnology
+from resources.technologies import Asset
 from scenarios.constraints import CapacityCapper
 
 

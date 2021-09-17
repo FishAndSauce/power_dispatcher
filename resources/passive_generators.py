@@ -5,11 +5,11 @@ from typing import Union, List
 import numpy as np
 
 from statistics.stochastics import StochasticResource
-from grid_resources.technologies import (
+from resources.technologies import (
     Asset,
     GridTechnology,
 )
-from grid_resources.curves import StochasticAnnualCurve
+from resources.curves import StochasticAnnualCurve
 
 
 @dataclass

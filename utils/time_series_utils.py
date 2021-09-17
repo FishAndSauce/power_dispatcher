@@ -4,7 +4,7 @@ import numpy as np
 from datetime import timedelta, datetime
 from dataclasses import dataclass
 from time import time
-from typing import List, Tuple
+from typing import Tuple
 
 
 class Timer:

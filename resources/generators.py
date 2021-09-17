@@ -5,12 +5,12 @@ from typing import Dict, Union, List, Tuple
 
 import numpy as np
 
-from grid_resources.commodities import Fuel
-from grid_resources.technologies import (
+from resources.commodities import Fuel
+from resources.technologies import (
     GridTechnology,
     Asset
 )
-from grid_resources.emissions import EmissionsCharacteristics
+from resources.emissions import EmissionsCharacteristics
 from utils.geometry import Line
 
 

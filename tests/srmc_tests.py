@@ -3,9 +3,9 @@ import pandas as pd
 from grid.asset_groups import ShortRunMarginalCostOptimiser
 from utils.data_utils import s3BucketManager
 from grid.portfolios import Portfolio
-from grid_resources.generators import GeneratorTechnology, Generator
-from grid_resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
-from grid_resources.curves import StochasticChoiceAnnualCurve
+from resources.generators import GeneratorTechnology, Generator
+from resources.commodities import Fuel, PriceCorrelation, StaticPrice, Markets, Emissions
+from resources.curves import StochasticChoiceAnnualCurve
 
 bucket = s3BucketManager('jw-modelling')
 folders = ['colombia-portfolio-inputs']

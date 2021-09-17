@@ -3,9 +3,9 @@ from typing import Tuple
 
 from constraints import CapacityConstraints
 from grid.results_logging import MonteCarloLog, ScenarioLogger
-from grid_resources.curves import StochasticAnnualCurve
-from grid_resources.commodities import Markets
-from grid_resources.passive_generators import PassiveResources
+from resources.curves import StochasticAnnualCurve
+from resources.commodities import Markets
+from resources.passive_generators import PassiveResources
 
 from grid.asset_groups import ShortRunMarginalCostOptimiser, AssetGroups
 

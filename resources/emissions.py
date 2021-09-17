@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from grid_resources.commodities import Emissions
+from resources.commodities import Emissions
 
 
 @dataclass

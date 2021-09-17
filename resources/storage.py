@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from grid_resources.technologies import GridTechnology, Asset
+from resources.technologies import GridTechnology, Asset
 from utils.time_series_utils import Scheduler, Forecaster, PeakAreas
 
 
