@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List
 
 from grid_resources.curves import StochasticAnnualCurve
 from grid_resources.technologies import Asset
@@ -27,7 +27,7 @@ class CapacityCapper:
                     asset.cappable_capacity,
                     exceedance
                 )
-                asset.firm_capacity -= capacity_displacement
+                asset.nameplate_capacity -= capacity_displacement
                 exceedance -= capacity_displacement
                 if exceedance <= 0:
                     break
