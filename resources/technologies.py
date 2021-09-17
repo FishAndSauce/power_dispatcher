@@ -5,6 +5,8 @@ from typing import List, Union
 from abc import ABC, abstractmethod
 import numpy as np
 
+from grid.constraints import CapacityConstraint
+
 
 class Validator:
     @staticmethod
@@ -68,7 +70,7 @@ class Asset(ABC):
     nameplate_capacity: float
     firm_capacity_factor: float
     technology: GridTechnology
-    constraint: Union[float, np.ndarray]
+    constraint: Union[CapacityConstraint, None]
     cappable_capacity: float
 
     def __post_init__(self):

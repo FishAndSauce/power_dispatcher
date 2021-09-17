@@ -291,7 +291,6 @@ class AssetGroups:
             for asset in self.all_assets_list
         }
 
-
     def assets_to_dataframe(self):
         return pd.concat(
             [assets.assets_to_dataframe()

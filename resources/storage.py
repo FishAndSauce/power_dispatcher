@@ -70,9 +70,12 @@ class StorageTechnology(GridTechnology):
 class Storage(Asset):
     technology: StorageTechnology
     hours_storage: float
-    charge_capacity: float
     optimiser: StorageOptimiser
     state_of_charge: float = 1.0
+
+    @property
+    def charge_capacity(self):
+        return self.firm_capacity
 
     @property
     def energy_capacity(self):

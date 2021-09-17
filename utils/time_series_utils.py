@@ -28,8 +28,27 @@ class Timer:
                   f'Check that event start time was added')
 
 
+class Scheduler(ABC):
+
+    @abstractmethod
+    def event_due(self, index) -> bool:
+        pass
+
+
 @dataclass
-class Scheduler:
+class SimpleScheduler(Scheduler):
+    period: int = 24
+
+    def event_due(self, index) -> bool:
+        due = False
+        if index % 5 == 0:
+            due = True
+        return due
+
+
+
+@dataclass
+class DTScheduler(Scheduler):
     start_dt: datetime
     interval: timedelta
     custom_events: Tuple[datetime] = tuple([])
@@ -37,14 +56,14 @@ class Scheduler:
     def __post_init__(self):
         self.next_event_due = self.start_dt
 
-    def event_due(self, dt: datetime) -> bool:
+    def event_due(self, index: datetime) -> bool:
         due = False
-        if self.next_event_due - dt <= timedelta(hours=0):
+        if self.next_event_due - index <= timedelta(hours=0):
             due = True
-            self.next_event_due = dt + self.interval
+            self.next_event_due = index + self.interval
         else:
             for event_dt in self.custom_events:
-                if event_dt - dt <= timedelta(hours=0):
+                if event_dt - index <= timedelta(hours=0):
                     due = True
                     self.custom_events.remove(event_dt)
         return due

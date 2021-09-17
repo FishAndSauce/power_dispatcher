@@ -101,7 +101,6 @@ class GeneratorTechnology(GridTechnology):
 @dataclass(order=True)
 class Generator(Asset):
     technology: GeneratorTechnology
-    constraint: CapacityConstraint = None
 
     def dispatch(
             self,
