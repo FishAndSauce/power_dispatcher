@@ -64,7 +64,6 @@ class PassiveTechnology(GridTechnology):
 class PassiveGenerator(Asset):
     technology: PassiveTechnology
     passive_resource: PassiveResource
-    constraint: Union[float, np.ndarray, None] = None
 
     def dispatch(
             self,
