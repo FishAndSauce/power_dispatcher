@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Tuple
 
-from constraints import CapacityConstraints
+from grid.constraints import CapacityConstraints
 from grid.results_logging import MonteCarloLog, ScenarioLogger
 from resources.curves import StochasticAnnualCurve
 from resources.commodities import Markets
@@ -66,16 +66,17 @@ class ScenarioManager:
                 self.portfolio.dispatch_logger.annual_cost_totals(),
             )
 
-    def monte_carlo_scenarios(
+    def monte_carlo_capacity_scenarios(
             self,
-            capacities: dict,
+            nominal_capacities: dict,
             iterations: int = 100,
             log_stats: Tuple[str] = ('mean', 'std')
     ):
         self.scenario_logger = ScenarioLogger()
-        self.scenario_summary = capacities
-        self.portfolio.update_capacities(capacities)
-        self.monte_carlo(capacities, iterations)
+        self.scenario_summary = nominal_capacities
+        self.portfolio.update_capacities(nominal_capacities, cap_capacities=True)
+        updated_capacities = self.portfolio.asset_capacities()
+        self.monte_carlo(updated_capacities, iterations)
         self.scenario_logger.log_scenario(
             self.monte_carlo_logger.aggregated_statistics(log_stats),
         )

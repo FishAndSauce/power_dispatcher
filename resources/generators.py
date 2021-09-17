@@ -11,7 +11,7 @@ from resources.technologies import (
     Asset
 )
 from resources.emissions import EmissionsCharacteristics
-from scenarios.constraints import CapacityConstraint
+from grid.constraints import CapacityConstraint
 from utils.geometry import Line
 
 

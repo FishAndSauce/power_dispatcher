@@ -7,10 +7,9 @@ from typing import List, Tuple, Dict
 import pandas as pd
 
 from grid.results_logging import DispatchLog
-from resources.curves import StochasticAnnualCurve
 from resources.generators import GeneratorTechnology
 from resources.technologies import Asset
-from scenarios.constraints import CapacityCapper
+from grid.constraints import CapacityCapper
 
 
 def idx(columns, name):
@@ -278,11 +277,20 @@ class AssetGroups:
 
     def update_capacities(
             self,
-            assets: Dict[str, float]
+            assets: Dict[str, float],
+            cap_capacities: bool
     ):
         for name, capacity in assets.items():
             self.all_assets_dict[name].nameplate_capacity = capacity
-        self.capacity_capper.cap(self.capacity_exceedance)
+        if cap_capacities:
+            self.capacity_capper.cap(self.capacity_exceedance)
+
+    def asset_capacities(self) -> Dict[str, float]:
+        return {
+            asset.name: asset.firm_capacity
+            for asset in self.all_assets_list
+        }
+
 
     def assets_to_dataframe(self):
         return pd.concat(
