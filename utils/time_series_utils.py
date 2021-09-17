@@ -38,13 +38,13 @@ class Scheduler(ABC):
 @dataclass
 class SimpleScheduler(Scheduler):
     period: int = 24
+    offset: int = 0
 
     def event_due(self, index) -> bool:
         due = False
-        if index % 5 == 0:
+        if index - self.offset % self.period == 0:
             due = True
         return due
-
 
 
 @dataclass
@@ -77,33 +77,42 @@ class Forecaster(ABC):
     def look_ahead(
         self,
         arr: pd.Series,
-        start_datetime: datetime,
+        start_index: datetime,
         custom_window: timedelta = None
     ):
-        if custom_window:
-            window = custom_window
-        else:
-            window = self.window
-        fmt = '%Y-%m-%d %H:%M'
-        end_time = start_datetime + window
-        return arr[start_datetime.strftime(fmt): end_time.strftime(fmt)]
+        pass
 
 
 @dataclass
-class PerfectForecaster(Forecaster):
+class SimpleForecaster(Forecaster):
+    window: int
+
     def look_ahead(
         self,
         arr: pd.Series,
-        start_datetime: datetime,
-        custom_window: timedelta = None
+        start_index: int,
+        custom_window: int = None
     ):
+        window = self.window
         if custom_window:
             window = custom_window
-        else:
-            window = self.window
+        return arr[start_index: start_index + window]
+
+
+@dataclass
+class DTPerfectForecaster(Forecaster):
+    def look_ahead(
+        self,
+        arr: pd.Series,
+        start_index: datetime,
+        custom_window: timedelta = None
+    ):
+        window = self.window
+        if custom_window:
+            window = custom_window
         fmt = '%Y-%m-%d %H:%M'
-        end_time = start_datetime + window
-        return arr[start_datetime.strftime(fmt): end_time.strftime(fmt)]
+        end_time = start_index + window
+        return arr[start_index.strftime(fmt): end_time.strftime(fmt)]
 
 
 class PeakAreas:
