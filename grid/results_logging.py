@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple
 import numpy as np
 import pandas as pd
-from itertools import product
 from matplotlib import pyplot as plt
 
 
@@ -126,10 +125,10 @@ class ScenarioLogger:
     log: pd.DataFrame = None
 
     def __post_init__(self):
-        self.log = pd.DataFrame()
+        self.clear_log()
 
     def clear_log(self):
-        pass
+        self.log = pd.DataFrame()
 
     def log_scenario(self, scenario_results: pd.DataFrame):
         self.log = pd.concat([
