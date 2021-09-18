@@ -5,7 +5,7 @@ from typing import List, Union
 from abc import ABC, abstractmethod
 import numpy as np
 
-from portfolio.constraints import CapacityConstraint
+from portfolio.portfolio.constraints import CapacityConstraint
 
 
 class Validator:

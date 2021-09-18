@@ -5,8 +5,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from resources.technologies import GridTechnology, Asset
-from utils.time_series_utils import Scheduler, Forecaster, PeakAreas
+from portfolio.resources.technologies import GridTechnology, Asset
+from portfolio.utils.time_series_utils import Scheduler, Forecaster, PeakAreas
 
 
 @dataclass
