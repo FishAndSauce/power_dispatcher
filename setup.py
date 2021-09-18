@@ -9,7 +9,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="electricity-portfolio",
-    version="0.0.5",
+    version="0.0.6",
     description="Electricity portfolio analysis",
     long_description=README,
     long_description_content_type="text/markdown",
