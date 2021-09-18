@@ -160,7 +160,7 @@ class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
     def optimise(
             group: RankedAssetGroup,
             optimise_on: str,
-    ):
+    ) -> List[Asset]:
         if not group:
             return None
 
@@ -174,7 +174,7 @@ class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
             for t in group.asset_rank
         ]
         ranker.sort_values(optimise_on, inplace=True)
-        return RankedAssetGroup(ranker['technology'].to_list())
+        return ranker['technology'].to_list()
 
 
 @dataclass
