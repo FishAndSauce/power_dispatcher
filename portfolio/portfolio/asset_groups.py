@@ -201,7 +201,7 @@ class RankedAssetGroup:
 
     def rank_assets(self, optimiser: AssetGroupOptimiser):
         self.asset_rank = optimiser.optimise(
-            self.asset_rank,
+            self,
             self.optimise_on
         )
 
