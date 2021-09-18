@@ -10,7 +10,7 @@ from grid.constraints import CapacityConstraint
 
 class Validator:
     @staticmethod
-    def is_ratio(value: float, value_name: str):
+    def is_proportion(value: float, value_name: str):
         if not 0.0 <= value <= 1.0:
             raise ValueError(f'{value_name} must be between 0.0 and 1.0')
 
@@ -74,9 +74,9 @@ class Asset(ABC):
     cappable_capacity: float
 
     def __post_init__(self):
-        Validator.cappable_less_than_capacity(
+        Validator.is_proportion(
             self.cappable_capacity,
-            self.firm_capacity
+            'cappable_capacity'
         )
 
     @property
