@@ -174,7 +174,7 @@ class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
             for t in group.asset_rank
         ]
         ranker.sort_values(optimise_on, inplace=True)
-        return RankedAssetGroup(ranker['generator'].to_list())
+        return RankedAssetGroup(ranker['technology'].to_list())
 
 
 @dataclass
