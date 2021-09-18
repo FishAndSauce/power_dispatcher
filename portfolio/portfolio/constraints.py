@@ -3,8 +3,8 @@ from typing import List
 import numpy as np
 from abc import abstractmethod
 
-from resources.annual_curves import StochasticAnnualCurve, StochasticWindowAnnualCurve
-from statistics.stochastics import StochasticResource
+from portfolio.resources.annual_curves import StochasticAnnualCurve, StochasticWindowAnnualCurve
+from portfolio.statistics.stochastics import StochasticResource
 
 
 @dataclass

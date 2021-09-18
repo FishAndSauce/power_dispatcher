@@ -6,9 +6,9 @@ from typing import List, Tuple, Dict
 
 import pandas as pd
 
-from portfolio.results_logging import DispatchLog
-from resources.generators import GeneratorTechnology
-from resources.technologies import Asset
+from portfolio.portfolio.results_logging import DispatchLog
+from portfolio.resources.generators import GeneratorTechnology
+from portfolio.resources.technologies import Asset
 
 
 def idx(columns, name):

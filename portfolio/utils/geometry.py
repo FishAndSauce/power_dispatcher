@@ -1,6 +1,4 @@
-import json
-import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List
 from matplotlib import pyplot as plt
 

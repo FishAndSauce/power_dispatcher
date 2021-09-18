@@ -4,12 +4,12 @@ from typing import List
 
 import numpy as np
 
-from statistics.stochastics import StochasticResource
-from resources.technologies import (
+from portfolio.statistics.stochastics import StochasticResource
+from portfolio.resources.technologies import (
     Asset,
     GridTechnology,
 )
-from resources.annual_curves import StochasticAnnualCurve, StochasticComplementaryChoiceAnnualCurve
+from portfolio.resources.annual_curves import StochasticAnnualCurve, StochasticComplementaryChoiceAnnualCurve
 
 
 @dataclass

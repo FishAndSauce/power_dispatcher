@@ -5,13 +5,13 @@ from typing import Dict, Union, List, Tuple
 
 import numpy as np
 
-from resources.commodities import Fuel
-from resources.technologies import (
+from portfolio.resources.commodities import Fuel
+from portfolio.resources.technologies import (
     GridTechnology,
     Asset
 )
-from resources.emissions import EmissionsCharacteristics
-from utils.geometry import Line
+from portfolio.resources.emissions import EmissionsCharacteristics
+from portfolio.utils.geometry import Line
 
 
 @dataclass

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import List, Dict
 import pandas as pd
 
-from statistics.stochastics import CorrelatedDistributionModel, StochasticResource
+from portfolio.statistics.stochastics import CorrelatedDistributionModel, StochasticResource
 
 
 class Validator:

@@ -8,7 +8,7 @@ from typing import List, Any, Dict
 import calendar
 from datetime import date, datetime
 
-from statistics.stochastics import (
+from portfolio.statistics.stochastics import (
     RandomArrayChoiceModel,
     StochasticModel,
     RandomWindowChoiceModel,

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from resources.commodities import Emissions
+from portfolio.resources.commodities import Emissions
 
 
 @dataclass

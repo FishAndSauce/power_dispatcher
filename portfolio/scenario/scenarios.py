@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 from typing import Tuple
 
-from portfolio.constraints import CapacityConstraints
-from portfolio.results_logging import MonteCarloLog, ScenarioLogger
-from resources.annual_curves import StochasticAnnualCurve
-from resources.commodities import Markets
-from resources.passive_generators import PassiveResources
+from portfolio.portfolio.constraints import CapacityConstraints
+from portfolio.portfolio.results_logging import MonteCarloLog, ScenarioLogger
+from portfolio.resources.annual_curves import StochasticAnnualCurve
+from portfolio.resources.commodities import Markets
+from portfolio.resources.passive_generators import PassiveResources
 
-from portfolio.asset_groups import ShortRunMarginalCostOptimiser, AssetGroups
+from portfolio.portfolio.asset_groups import ShortRunMarginalCostOptimiser, AssetGroups
 
 
 @dataclass
