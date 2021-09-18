@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Type, Dict
+from typing import List, Dict
 import pandas as pd
 
 from statistics.stochastics import CorrelatedDistributionModel, StochasticResource

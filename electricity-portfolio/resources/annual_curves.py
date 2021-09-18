@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import stats, integrate
+from scipy import integrate
 import pandas as pd
 from dataclasses import dataclass
 from matplotlib import pyplot as plt

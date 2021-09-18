@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Union, List
+from typing import List
 
 import numpy as np
 
@@ -9,7 +9,7 @@ from resources.technologies import (
     Asset,
     GridTechnology,
 )
-from resources.curves import StochasticAnnualCurve, StochasticComplementaryChoiceAnnualCurve
+from resources.annual_curves import StochasticAnnualCurve, StochasticComplementaryChoiceAnnualCurve
 
 
 @dataclass

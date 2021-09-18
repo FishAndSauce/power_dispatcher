@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import List
 import numpy as np
-from abc import ABC , abstractmethod
+from abc import abstractmethod
 
-from resources.curves import StochasticAnnualCurve, StochasticWindowAnnualCurve
+from resources.annual_curves import StochasticAnnualCurve, StochasticWindowAnnualCurve
 from statistics.stochastics import StochasticResource
 
 
@@ -67,7 +67,6 @@ class StochasticWindowCapacityConstraint(CapacityConstraint):
             ),
             factor
         )
-
 
 
 @dataclass

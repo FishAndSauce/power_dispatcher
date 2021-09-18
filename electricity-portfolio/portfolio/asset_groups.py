@@ -6,7 +6,7 @@ from typing import List, Tuple, Dict
 
 import pandas as pd
 
-from grid.results_logging import DispatchLog
+from portfolio.results_logging import DispatchLog
 from resources.generators import GeneratorTechnology
 from resources.technologies import Asset
 
