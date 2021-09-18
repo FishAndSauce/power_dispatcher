@@ -61,7 +61,7 @@ class ScenarioManager:
             self.monte_carlo_logger = MonteCarloLog(scenario)
         for simulation in range(iterations + 1):
             self.refresh_all()
-            self.portfolio.dispatch(self.demand)
+            self.portfolio.dispatch(self.demand.data)
             self.monte_carlo_logger.log_simulation(
                 self.portfolio.dispatch_logger.annual_cost_totals(),
             )
