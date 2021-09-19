@@ -32,8 +32,10 @@ class Validator:
     @staticmethod
     def annual_hours(data: List[list]):
         for arr in data:
-            if len(arr) != 8760:
-                raise ValueError(f'Invalid array: Nested arrays must have length 8760'
+            length = len(arr)
+            if length != 8760:
+                raise ValueError(f'Invalid array length {length}: Nested arrays must'
+                                 f' have length 8760 '
                                  f'(i.e. they must represent a year worth of hours '
                                  f'(leap year not accepted)')
 
