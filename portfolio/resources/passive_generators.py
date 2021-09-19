@@ -14,7 +14,11 @@ from portfolio.resources.annual_curves import StochasticAnnualCurve, StochasticC
 
 @dataclass
 class PassiveResource(StochasticResource):
+    resource: StochasticAnnualCurve = None
     data: np.ndarray = None
+
+    def __post_init__(self):
+        self.refresh()
 
     @abstractmethod
     def refresh(self):
@@ -33,9 +37,7 @@ class SimplePassiveResource(PassiveResource):
 
 @dataclass
 class CorrelatedPassiveResource(PassiveResource):
-    resource: StochasticComplementaryChoiceAnnualCurve = None
     name: str = None
-    data: np.ndarray = None
 
     def refresh(self):
         self.resource.refresh()
