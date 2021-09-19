@@ -163,16 +163,14 @@ class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
     ) -> List[Asset]:
         if not group:
             return None
-
         ranker = pd.DataFrame.from_dict(
             group.asset_dict,
             'index',
             columns=['technology']
         )
-        ranker[optimise_on] = [
-            getattr(t.technology, optimise_on)
-            for t in group.asset_rank
-        ]
+        ranker[optimise_on] = ranker['technology'].apply(
+            lambda x: getattr(x.technology, optimise_on)
+        )
         ranker.sort_values(optimise_on, inplace=True)
         return ranker['technology'].to_list()
 
