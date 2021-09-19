@@ -32,7 +32,7 @@ class Validator:
     @staticmethod
     def annual_hours(data: List[list]):
         for arr in data:
-            if 8760 != len(arr):
+            if len(arr) != 8760:
                 raise ValueError(f'Invalid array: Nested arrays must have length 8760'
                                  f'(i.e. they must represent a year worth of hours '
                                  f'(leap year not accepted)')
@@ -201,7 +201,7 @@ class StochasticComplementaryChoiceAnnualCurveModel(StochasticAnnualCurveModel):
         if self._direct_instantiation:
             raise Exception(f'You may only instantiate this objects of this class'
                             f'with class methods - e.g. from_array()')
-        self.stochastic_model = ComplementaryRandomArrayChoiceModel(self.sample_data)
+        self.stochastic_model = ComplementaryRandomCurveChoice(self.sample_data)
         self.update()
 
     def update(

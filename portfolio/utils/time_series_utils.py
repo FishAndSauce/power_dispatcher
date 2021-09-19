@@ -29,7 +29,6 @@ class Timer:
 
 
 class Scheduler(ABC):
-
     @abstractmethod
     def event_due(self, index) -> bool:
         pass
