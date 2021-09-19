@@ -7,7 +7,7 @@ from portfolio.resources.annual_curves import StochasticAnnualCurve
 from portfolio.resources.commodities import Markets
 from portfolio.resources.passive_generators import PassiveResources
 
-from portfolio.portfolio.asset_groups import ShortRunMarginalCostOptimiser, AssetGroups
+from portfolio.portfolio.asset_groups import RankOnOptimiser, AssetGroups
 
 
 @dataclass
@@ -26,7 +26,7 @@ class ScenarioManager:
     markets: Markets
     passive_resource: PassiveResources
     portfolio: AssetGroups
-    optimiser: ShortRunMarginalCostOptimiser
+    optimiser: RankOnOptimiser
     constraints: CapacityConstraints
     scenario_summary: dict = None
     monte_carlo_logger: MonteCarloLog = None

@@ -154,33 +154,28 @@ class AssetGroupOptimiser(ABC):
 
 
 @dataclass
-class ShortRunMarginalCostOptimiser(AssetGroupOptimiser):
+class RankOnOptimiser(AssetGroupOptimiser):
 
     @staticmethod
     def optimise(
             group: RankedAssetGroup,
-            optimise_on: str,
     ) -> List[Asset]:
         if not group:
             return None
-        ranker = pd.DataFrame.from_dict(
-            group.asset_dict,
-            'index',
-            columns=['technology']
+        group.asset_rank.sort(
+            key=lambda asset: getattr(
+                asset.technology,
+                group.rank_on
+            ),
+            reverse=True
         )
-        ranker[optimise_on] = ranker['technology'].apply(
-            lambda x: getattr(x.technology, optimise_on)
-        )
-        ranker.sort_values(optimise_on, inplace=True)
-        return ranker['technology'].to_list()
-
 
 @dataclass
 class RankedAssetGroup:
     """ Collection of Assets with ranked dispatch order
     """
     asset_rank: List[Asset]
-    optimise_on: str = None
+    rank_on: str = None
 
     @property
     def asset_dict(self) -> Dict[str, Asset]:
@@ -198,10 +193,7 @@ class RankedAssetGroup:
         ])
 
     def rank_assets(self, optimiser: AssetGroupOptimiser):
-        self.asset_rank = optimiser.optimise(
-            self,
-            self.optimise_on
-        )
+        optimiser.optimise(self)
 
     def dispatch(
             self,
@@ -245,7 +237,7 @@ class AssetGroups:
     storages: RankedAssetGroup
     passive_generators: RankedAssetGroup
     nominal_capacity_cap: float
-    optimiser: ShortRunMarginalCostOptimiser
+    optimiser: RankOnOptimiser
     capacity_capper: CapacityCapper
     specified_deployment_order: Tuple[str] = ('passive_generators', 'storages', 'generators')
     dispatch_logger: DispatchLog = None
