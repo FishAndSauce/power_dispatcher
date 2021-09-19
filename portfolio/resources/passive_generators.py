@@ -32,7 +32,7 @@ class SimplePassiveResource(PassiveResource):
 
     def refresh(self):
         self.resource.refresh()
-        self.data = self.resource.data.to_numpy()
+        self.data = np.array(self.resource.data)
 
 
 @dataclass
@@ -41,7 +41,7 @@ class CorrelatedPassiveResource(PassiveResource):
 
     def refresh(self):
         self.resource.refresh()
-        self.data = self.resource.data[self.name].to_numpy()
+        self.data = np.array(self.resource.data[self.name])
 
 
 @dataclass
