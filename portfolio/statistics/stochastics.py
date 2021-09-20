@@ -75,7 +75,7 @@ class RandomWindowChoiceModel(StochasticModel):
             0,
             self.last_idx - number_samples
         )
-        end_index = start_index + number_samples -1
+        end_index = start_index + number_samples
         return self.data[start_index: end_index]
 
 
