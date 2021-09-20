@@ -69,6 +69,7 @@ class Storage(Asset):
     hours_storage: float
     optimiser: StorageOptimiser
     state_of_charge: float = 1.0
+    simple_indexing = False
 
     @property
     def charge_capacity(self):
@@ -125,9 +126,13 @@ class Storage(Asset):
     def dispatch(self, demand: pd.Series):
 
         dispatch = []
-        for dt, load_value in demand.iteritems():
+        if isinstance(demand, pd.Series):
+            demand_iterable = demand.to_list
+        for idx, load_value in enumerate(demand):
+            if not self.simple_indexing:
+                idx = demand.index[idx]
             self.optimiser.set_limit(
-                dt,
+                idx,
                 demand,
                 self.available_energy
             )
