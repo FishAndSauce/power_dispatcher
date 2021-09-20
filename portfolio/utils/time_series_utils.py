@@ -29,6 +29,8 @@ class Timer:
 
 
 class Scheduler(ABC):
+    _simple_indexing = False
+
     @abstractmethod
     def event_due(self, index) -> bool:
         pass
@@ -38,6 +40,7 @@ class Scheduler(ABC):
 class SimpleScheduler(Scheduler):
     period: int = 24
     offset: int = 0
+    _simple_indexing = True
 
     def event_due(self, index: Union[int, datetime]) -> bool:
         if isinstance(index, datetime):
@@ -73,6 +76,7 @@ class DTScheduler(Scheduler):
 @dataclass
 class Forecaster(ABC):
     window: timedelta
+    _simple_indexing = False
 
     @abstractmethod
     def look_ahead(

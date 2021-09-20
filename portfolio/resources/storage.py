@@ -17,6 +17,9 @@ class StorageOptimiser(ABC):
     discharge_threshold: float = 0.0
     charge_threshold = 0.0
 
+    def _simple_indexing(self):
+        return self.scheduler._simple_indexing
+
     @abstractmethod
     def set_limit(
             self,
@@ -69,7 +72,10 @@ class Storage(Asset):
     hours_storage: float
     optimiser: StorageOptimiser
     state_of_charge: float = 1.0
-    simple_indexing = False
+
+    @property
+    def _simple_indexing(self):
+        return self.optimiser._simple_indexing
 
     @property
     def charge_capacity(self):
@@ -123,13 +129,12 @@ class Storage(Asset):
         self.update_state(energy_exchange)
         return energy_exchange
 
-    def dispatch(self, demand: pd.Series):
-
+    def dispatch(self, demand: pd.Series)
         dispatch = []
         if isinstance(demand, pd.Series):
             demand_iterable = demand.to_list
         for idx, load_value in enumerate(demand):
-            if not self.simple_indexing:
+            if not self._simple_indexing:
                 idx = demand.index[idx]
             self.optimiser.set_limit(
                 idx,
