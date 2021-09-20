@@ -7,21 +7,6 @@ from matplotlib import pyplot as plt
 
 
 @dataclass
-class ResultsLog(ABC):
-    @abstractmethod
-    def clear_log(*args, **kwargs):
-        pass
-
-    @abstractmethod
-    def log(*args, **kwargs):
-        pass
-
-    @abstractmethod
-    def plot(*args, **kwargs):
-        pass
-
-
-@dataclass
 class DispatchLog:
     demand: np.ndarray
     dispatch_log: pd.DataFrame = None
@@ -109,7 +94,7 @@ class MonteCarloLog:
     def aggregated_statistics(
         self,
         scenario_name: str,
-        stats: Tuple[str] = ('mean, std')
+        stats: Tuple[str] = ('mean', 'std')
     ):
         scenario_name_s = pd.Series({'scenario_name': scenario_name})
         scenario_s = pd.Series(self.scenario)
@@ -137,7 +122,6 @@ class ScenarioLogger:
             self.log,
             scenario_results
         ], axis=1)
-
 
     def plot(self):
         pass
