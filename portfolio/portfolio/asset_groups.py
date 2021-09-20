@@ -208,7 +208,7 @@ class RankedAssetGroup:
                 dispatch_logger.dispatch_log['residual_demand']
             )
             if log_annual_costs:
-                annual_costs = asset.annual_dispatch_cost(dispatch),
+                annual_costs = asset.annual_dispatch_cost(dispatch)
             if log_levelized_cost:
                 levelized_cost = asset.levelized_cost(dispatch)
 
