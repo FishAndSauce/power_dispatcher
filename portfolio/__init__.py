@@ -1,4 +1,2 @@
-"""Electricity Portfolio Analysis"""
-
-__version__ = '0.0.14'
-
+"""Electricity Portfolio Analysis""" 
+__version__ = "0.0.16"

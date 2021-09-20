@@ -240,3 +240,7 @@ nn_model.sav
 
 # Local user data
 /local_data
+
+
+# Pypi deployment
+deployment.py

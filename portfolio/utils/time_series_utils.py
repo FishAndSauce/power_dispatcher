@@ -4,7 +4,7 @@ import numpy as np
 from datetime import timedelta, datetime
 from dataclasses import dataclass
 from time import time
-from typing import Tuple
+from typing import Tuple, Union
 
 
 class Timer:
@@ -39,7 +39,9 @@ class SimpleScheduler(Scheduler):
     period: int = 24
     offset: int = 0
 
-    def event_due(self, index) -> bool:
+    def event_due(self, index: Union[int, datetime]) -> bool:
+        if isinstance(index, datetime):
+            index = index.hour
         due = False
         if index - self.offset % self.period == 0:
             due = True

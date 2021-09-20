@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,7 @@ class StorageOptimiser(ABC):
     @abstractmethod
     def set_limit(
             self,
-            dt: datetime,
+            index: Union[datetime, int],
             demand: pd.Series,
             energy: float
     ):
@@ -31,20 +32,16 @@ class StorageOptimiser(ABC):
 
 
 @dataclass
-class PeakShaveStorageOptimiser:
-    scheduler: Scheduler
-    forecaster: Forecaster
-    discharge_threshold: float = 0.0
-    charge_threshold = 0.0
+class PeakShaveStorageOptimiser(StorageOptimiser):
 
     def set_limit(
             self,
-            dt: datetime,
+            index: Union[datetime, int],
             demand: pd.Series,
             energy: float
     ):
-        if self.scheduler.event_due(dt):
-            demand_forecast = self.forecaster.look_ahead(demand, dt)
+        if self.scheduler.event_due(index):
+            demand_forecast = self.forecaster.look_ahead(demand, index)
             sorted_arr = np.sort(demand_forecast)
             peak_areas = PeakAreas.cumulative_peak_areas(sorted_arr)
             index = PeakAreas.peak_area_idx(peak_areas, energy)
