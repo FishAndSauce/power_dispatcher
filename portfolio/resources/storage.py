@@ -129,7 +129,7 @@ class Storage(Asset):
         self.update_state(energy_exchange)
         return energy_exchange
 
-    def dispatch(self, demand: pd.Series)
+    def dispatch(self, demand: pd.Series):
         dispatch = []
         if isinstance(demand, pd.Series):
             demand_iterable = demand.to_list
