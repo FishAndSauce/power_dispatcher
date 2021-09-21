@@ -99,8 +99,8 @@ class s3BucketManager:
     cache_manager: CacheManager = None
 
     def __post_init__(self):
-        if not self.cache:
-            self.cache = CacheManager('dummy_cache', 1, dummy=True)
+        if not self.cache_manager:
+            self.cache_manager = CacheManager('dummy_cache', 1, dummy=True)
 
     @property
     def resource(self):
