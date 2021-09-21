@@ -178,7 +178,7 @@ class s3BucketManager:
                 indent=indent
             ).encode('UTF-8')))
 
-    @cache_data(ReaderWriter.write_json, ReaderWriter.read_json)
+    @cache_data(ReaderWriter.read_json, ReaderWriter.write_json)
     def s3_json_to_dict(
             self,
             folders,
