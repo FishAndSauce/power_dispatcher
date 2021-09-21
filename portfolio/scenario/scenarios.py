@@ -62,11 +62,13 @@ class ScenarioManager:
             self.monte_carlo_logger = MonteCarloLog(scenario)
         for simulation in range(iterations + 1):
             self.refresh_all()
-            self.portfolio.dispatch(self.demand.data, inspect_dispatch)
+            self.portfolio.dispatch(
+                self.demand.data,
+                inspect_dispatch=inspect_dispatch
+            )
             self.monte_carlo_logger.log_simulation(
                 self.portfolio.dispatch_logger.annual_cost_totals(),
             )
-
 
     def monte_carlo_capacity_scenario(
             self,
@@ -80,7 +82,11 @@ class ScenarioManager:
         self.scenario_summary = nominal_capacities
         self.portfolio.update_capacities(nominal_capacities, cap_capacities=True)
         updated_capacities = self.portfolio.asset_capacities()
-        self.monte_carlo(updated_capacities, iterations, inspect_dispatch)
+        self.monte_carlo(
+            updated_capacities,
+            iterations,
+            inspect_dispatch=inspect_dispatch
+        )
         self.scenario_logger.log_scenario(
             self.monte_carlo_logger.aggregated_statistics(scenario_name, log_stats),
         )
