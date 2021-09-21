@@ -57,8 +57,9 @@ class CacheManager:
         return name
 
     def _exists(self, call_str: str) -> CacheStatus:
-        if call_str in self._call_record.keys():
-            fp = self._call_record[call_str]
+        log = self._retrieve_log()
+        if call_str in log.keys():
+            fp = log[call_str]
             exists = os.path.exists(fp)
         else:
             fp = os.path.join(self.directory, self._name_file())
