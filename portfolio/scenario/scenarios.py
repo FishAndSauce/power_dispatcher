@@ -52,6 +52,9 @@ class ScenarioManager:
                 refresh = getattr(self, method)
                 refresh()
 
+    def clear_dispatch_log(self):
+        self.portfolio.dispatch_logger.clear_log()
+
     def monte_carlo(
         self,
         scenario: dict,
@@ -69,6 +72,7 @@ class ScenarioManager:
             self.monte_carlo_logger.log_simulation(
                 self.portfolio.dispatch_logger.annual_cost_totals(),
             )
+            self.clear_dispatch_log()
 
     def monte_carlo_capacity_scenario(
             self,
