@@ -4,7 +4,7 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / 'README.md').read_text()
 setup(
     name='electricity-portfolio',
-    version='0.0.22',
+    version='0.0.23',
     description='Electricity portfolio analysis',
     long_description=README,
     long_description_content_type='text/markdown',
@@ -24,5 +24,7 @@ setup(
         'numpy == 1.21.2',
         'pandas == 1.3.3',
         'scipy == 1.7.1',
+        'pyarrow == 5.0.0'
+        'pydantic == 1.8.2'
     ]
 )
