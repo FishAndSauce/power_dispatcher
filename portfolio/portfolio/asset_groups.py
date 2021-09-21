@@ -323,6 +323,8 @@ class AssetGroups:
             demand,
             log_annual_costs: bool = True,
             log_levelized_cost: bool = True,
+            inspect_dispatch: bool = False
+
     ):
         if not self.dispatch_logger:
             self.dispatch_logger = DispatchLog(demand)
@@ -332,5 +334,7 @@ class AssetGroups:
                 log_annual_costs,
                 log_levelized_cost,
             )
+        if inspect_dispatch:
+            self.dispatch_logger.plot()
 
 

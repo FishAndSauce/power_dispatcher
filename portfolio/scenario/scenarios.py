@@ -56,28 +56,31 @@ class ScenarioManager:
         self,
         scenario: dict,
         iterations: int = 100,
+        inspect_dispatch: bool = False
     ):
         if not self.monte_carlo_logger:
             self.monte_carlo_logger = MonteCarloLog(scenario)
         for simulation in range(iterations + 1):
             self.refresh_all()
-            self.portfolio.dispatch(self.demand.data)
+            self.portfolio.dispatch(self.demand.data, inspect_dispatch)
             self.monte_carlo_logger.log_simulation(
                 self.portfolio.dispatch_logger.annual_cost_totals(),
             )
+
 
     def monte_carlo_capacity_scenario(
             self,
             scenario_name,
             nominal_capacities: dict,
             iterations: int = 100,
-            log_stats: Tuple[str] = ('mean', 'std')
+            log_stats: Tuple[str] = ('mean', 'std'),
+            inspect_dispatch: bool = False
     ):
         self.scenario_logger = ScenarioLogger()
         self.scenario_summary = nominal_capacities
         self.portfolio.update_capacities(nominal_capacities, cap_capacities=True)
         updated_capacities = self.portfolio.asset_capacities()
-        self.monte_carlo(updated_capacities, iterations)
+        self.monte_carlo(updated_capacities, iterations, inspect_dispatch)
         self.scenario_logger.log_scenario(
             self.monte_carlo_logger.aggregated_statistics(scenario_name, log_stats),
         )

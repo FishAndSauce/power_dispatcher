@@ -131,8 +131,6 @@ class Storage(Asset):
 
     def dispatch(self, demand: pd.Series):
         dispatch = []
-        if isinstance(demand, pd.Series):
-            demand_iterable = demand.to_list
         for idx, load_value in enumerate(demand):
             if not self._simple_indexing:
                 idx = demand.index[idx]
