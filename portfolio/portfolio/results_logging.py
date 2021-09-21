@@ -60,7 +60,7 @@ class DispatchLog:
             plt_this.append(self.dispatch_log[gen])
 
         plt.stackplot(
-            self.dispatch_log.dispatch.index,
+            self.dispatch_log.index,
             *plt_this,
             labels=self.dispatch_order
         )
