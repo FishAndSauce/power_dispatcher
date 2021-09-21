@@ -57,7 +57,7 @@ class DispatchLog:
         rank = self.dispatch_order
         rank.append('residual_demand')
         for gen in rank:
-            plt_this.append(self.dispatch_log.dispatch[gen])
+            plt_this.append(self.dispatch_log[gen])
 
         plt.stackplot(
             self.dispatch_log.dispatch.index,
