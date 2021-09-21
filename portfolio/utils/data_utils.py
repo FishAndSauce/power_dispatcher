@@ -20,7 +20,7 @@ class ReaderWriter:
     @staticmethod
     def write_json(obj: dict, fp: str):
         with open(fp, 'w') as f:
-            json.dump(obj, fp, indent=2)
+            json.dump(obj, f, indent=2)
 
 
 @dataclass
