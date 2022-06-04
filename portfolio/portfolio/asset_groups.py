@@ -170,6 +170,7 @@ class RankOnOptimiser(AssetGroupOptimiser):
             reverse=True
         )
 
+
 @dataclass
 class RankedAssetGroup:
     """ Collection of Assets with ranked dispatch order
@@ -191,6 +192,10 @@ class RankedAssetGroup:
             t.firm_capacity
             for t in self.asset_rank
         ])
+
+    def scale_asset_capacities(self, factor: float):
+        for asset in self.asset_rank:
+            asset.scale_capacity(factor)
 
     def rank_assets(self, optimiser: AssetGroupOptimiser):
         optimiser.optimise(self)
@@ -285,6 +290,11 @@ class AssetGroups:
             0.0,
             self.total_capacity - self.nominal_capacity_cap
         )
+
+    def scale_asset_capacities(self, factor: float):
+        self.generators.scale_asset_capacities(factor)
+        self.storages.scale_asset_capacities(factor)
+        self.passive_generators.scale_asset_capacities(factor)
 
     def cap_capacities(
         self,
