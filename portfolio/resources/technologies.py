@@ -102,6 +102,10 @@ class Asset(ABC):
     ) -> float:
         pass
 
+    def scale_capacity(self, factor: float):
+        self.nameplate_capacity *= factor
+        self.cappable_capacity *= factor
+
     def hourly_dispatch_cost(
             self,
             dispatch: np.ndarray,
