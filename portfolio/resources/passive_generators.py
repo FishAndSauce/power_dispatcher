@@ -67,14 +67,18 @@ class PassiveGenerator(Asset):
     technology: PassiveTechnology
     passive_resource: PassiveResource
 
+    @property
+    def generation_curve(self) -> np.ndarray:
+        return self.passive_resource.data * self.nameplate_capacity
+
     def dispatch(
             self,
             demand: np.ndarray
     ) -> np.ndarray:
         if self.constraint:
-            constraint = np.clip(self.passive_resource.data, 0, self.constraint)
+            constraint = np.clip(self.generation_curve, 0, self.constraint)
         else:
-            constraint = self.passive_resource.data
+            constraint = self.generation_curve
 
         return np.clip(
             demand,
