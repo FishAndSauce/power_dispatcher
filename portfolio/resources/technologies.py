@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from portfolio.portfolio.constraints import CapacityConstraint
+from portfolio.resources.dispatch import DispatchVector
 
 
 class Validator:
@@ -87,7 +88,7 @@ class Asset(ABC):
     def dispatch(
             self,
             demand: np.ndarray
-    ) -> np.ndarray:
+    ) -> DispatchVector:
         pass
 
     @abstractmethod

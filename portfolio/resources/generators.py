@@ -6,6 +6,7 @@ from typing import Dict, Union, List, Tuple
 import numpy as np
 
 from portfolio.resources.commodities import Fuel
+from portfolio.resources.dispatch import DispatchVector
 from portfolio.resources.technologies import (
     GridTechnology,
     Asset
@@ -104,7 +105,7 @@ class Generator(Asset):
     def dispatch(
             self,
             demand: np.ndarray
-    ) -> np.ndarray:
+    ) -> DispatchVector:
         if self.constraint:
             constraint = self.constraint.constraint
             if self.constraint.as_factor:
@@ -113,10 +114,13 @@ class Generator(Asset):
         else:
             ultimate_constraint = self.firm_capacity
 
-        return np.clip(
-            demand,
-            0,
-            ultimate_constraint
+        return DispatchVector(
+            name=self.name,
+            discharge=np.clip(
+                demand,
+                0,
+                ultimate_constraint
+            )
         )
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:

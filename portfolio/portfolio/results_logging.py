@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from portfolio.resources.dispatch import DispatchVector
+
 
 @dataclass
 class DispatchLog:
@@ -33,23 +35,22 @@ class DispatchLog:
 
     def log(
         self,
-        dispatch_name: str,
-        dispatch: np.ndarray,
+        dispatch: DispatchVector,
         annual_cost: float = None,
         levelized_cost: float = None
     ):
-        self.dispatch_log['residual_demand'] -= dispatch
-        self.dispatch_log[dispatch_name] = dispatch
-        self.dispatch_order.append(dispatch_name)
+        self.dispatch_log['residual_demand'] -= dispatch.as_net
+        self.dispatch_log[dispatch.name] = dispatch.as_net
+        self.dispatch_order.append(dispatch.name)
         if annual_cost:
             self.annual_costs.loc[
                 'annual_dispatch_cost',
-                dispatch_name
+                dispatch.name
             ] = annual_cost
         if levelized_cost:
             self.annual_costs.loc[
                 'levelized_cost',
-                dispatch_name
+                dispatch.name
             ] = levelized_cost
 
     def plot(self):

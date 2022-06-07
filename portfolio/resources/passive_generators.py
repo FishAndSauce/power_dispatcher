@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 
+from portfolio.resources.dispatch import DispatchVector
 from portfolio.statistics.stochastics import StochasticResource
 from portfolio.resources.technologies import (
     Asset,
@@ -74,16 +75,21 @@ class PassiveGenerator(Asset):
     def dispatch(
             self,
             demand: np.ndarray
-    ) -> np.ndarray:
+    ) -> DispatchVector:
         if self.constraint:
-            constraint = np.clip(self.generation_curve, 0, self.constraint)
+            max_dispatch = np.clip(self.generation_curve, 0, self.constraint)
         else:
-            constraint = self.generation_curve
+            max_dispatch = self.generation_curve
 
-        return np.clip(
+        discharge = np.clip(
             demand,
             0,
-            constraint
+            max_dispatch
+        )
+        return DispatchVector(
+            name=self.name,
+            discharge=discharge,
+            excess=np.where(max_dispatch > demand, max_dispatch - demand, 0.0)
         )
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:

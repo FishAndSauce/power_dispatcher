@@ -6,6 +6,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+from portfolio.resources.dispatch import DispatchVector
 from portfolio.resources.technologies import GridTechnology, Asset
 from portfolio.utils.time_series_utils import Scheduler, Forecaster, PeakAreas
 
@@ -129,7 +130,7 @@ class Storage(Asset):
         self.update_state(energy_exchange)
         return energy_exchange
 
-    def dispatch(self, demand: pd.Series):
+    def dispatch(self, demand: pd.Series) -> DispatchVector:
         dispatch = []
         for idx, load_value in enumerate(demand):
             if not self._simple_indexing:
@@ -145,7 +146,10 @@ class Storage(Asset):
                     self.optimiser.dispatch_proposal(load_value),
                 )
             )
-        return np.array(dispatch)
+        return DispatchVector.from_raw_floats(
+            name=self.name,
+            dispatch_vector=dispatch
+        )
 
     def annual_dispatch_cost(self, dispatch: np.ndarray) -> float:
         total_dispatch = dispatch.sum()
