@@ -87,6 +87,7 @@ class DispatchVector:
         """ Create instance from raw float where positive value
         is interpreted as discharge and negative dispatch interpreted as charge
         """
+        dispatch_vector = np.array(dispatch_vector)
         return cls(
             name=name,
             charge=np.where(dispatch_vector < 0.0, -dispatch_vector, 0.0),

@@ -137,4 +137,8 @@ class Generator(Asset):
         """
         if not total_dispatch_cost:
             total_dispatch_cost = self.annual_dispatch_cost(dispatch)
-        return total_dispatch_cost / dispatch.sum()
+        dispatch_sum = dispatch.sum()
+        if dispatch_sum > 0:
+            return total_dispatch_cost / dispatch.sum()
+        else:
+            return np.nan

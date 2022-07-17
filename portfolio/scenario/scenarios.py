@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from portfolio.portfolio.constraints import CapacityConstraints
-from portfolio.portfolio.results_logging import MonteCarloLog, ScenarioLogger
+from portfolio.portfolio.results_logging.plotting import StackPlotConfig
+from portfolio.portfolio.results_logging.results_logging import MonteCarloLog, ScenarioLogger
 from portfolio.resources.annual_curves import StochasticAnnualCurve
 from portfolio.resources.commodities import Markets
 from portfolio.resources.passive_generators import PassiveResources
@@ -29,8 +30,10 @@ class ScenarioManager:
     optimiser: RankOnOptimiser
     constraints: CapacityConstraints
     scenario_summary: dict = None
-    monte_carlo_logger: MonteCarloLog = None
     scenario_logger: ScenarioLogger = None
+
+    def __post_init__(self):
+        self.monte_carlo_logger = MonteCarloLog(self.portfolio.asset_capacities())
 
     def refresh_constraints(self):
         self.constraints.refresh()
@@ -55,19 +58,21 @@ class ScenarioManager:
     def clear_dispatch_log(self):
         self.portfolio.dispatch_logger.clear_log()
 
+    def update_capacities(self, nominal_capacities: dict, cap_capacities: bool):
+        self.portfolio.update_capacities(nominal_capacities, cap_capacities)
+        self.monte_carlo_logger.scenario = self.portfolio.asset_capacities()
+
     def monte_carlo(
         self,
-        scenario: dict,
         iterations: int = 100,
-        inspect_dispatch: bool = False
+        plot_config: StackPlotConfig = None
+
     ):
-        if not self.monte_carlo_logger:
-            self.monte_carlo_logger = MonteCarloLog(scenario)
         for simulation in range(iterations + 1):
             self.refresh_all()
             self.portfolio.dispatch(
                 self.demand.data,
-                inspect_dispatch=inspect_dispatch
+                plot_config=plot_config
             )
             self.monte_carlo_logger.log_simulation(
                 self.portfolio.dispatch_logger.annual_cost_totals(),
@@ -78,18 +83,18 @@ class ScenarioManager:
             self,
             scenario_name,
             nominal_capacities: dict,
+            capacity_cap: float,
             iterations: int = 100,
             log_stats: Tuple[str] = ('mean', 'std'),
-            inspect_dispatch: bool = False
+            plot_config: StackPlotConfig = None
     ):
+        self.portfolio.nominal_capacity_cap = capacity_cap
         self.scenario_logger = ScenarioLogger()
         self.scenario_summary = nominal_capacities
-        self.portfolio.update_capacities(nominal_capacities, cap_capacities=True)
-        updated_capacities = self.portfolio.asset_capacities()
+        self.update_capacities(nominal_capacities, cap_capacities=True)
         self.monte_carlo(
-            updated_capacities,
             iterations,
-            inspect_dispatch=inspect_dispatch
+            plot_config=plot_config
         )
         self.scenario_logger.log_scenario(
             self.monte_carlo_logger.aggregated_statistics(scenario_name, log_stats),

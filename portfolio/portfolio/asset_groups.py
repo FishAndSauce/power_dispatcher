@@ -6,7 +6,8 @@ from typing import List, Tuple, Dict
 
 import pandas as pd
 
-from portfolio.portfolio.results_logging import DispatchLog
+from portfolio.portfolio.results_logging.plotting import StackPlotConfig
+from portfolio.portfolio.results_logging.results_logging import DispatchLog
 from portfolio.resources.generators import GeneratorTechnology
 from portfolio.resources.technologies import Asset
 
@@ -167,7 +168,7 @@ class RankOnOptimiser(AssetGroupOptimiser):
                 asset.technology,
                 group.rank_on
             ),
-            reverse=True
+            reverse=False
         )
 
 
@@ -332,7 +333,7 @@ class AssetGroups:
             demand,
             log_annual_costs: bool = True,
             log_levelized_cost: bool = True,
-            inspect_dispatch: bool = False
+            plot_config: StackPlotConfig = None
 
     ):
         if not self.dispatch_logger:
@@ -343,7 +344,8 @@ class AssetGroups:
                 log_annual_costs,
                 log_levelized_cost,
             )
-        if inspect_dispatch:
-            self.dispatch_logger.plot()
+        if plot_config:
+            if plot_config.plot:
+                self.dispatch_logger.plot(plot_config)
 
 

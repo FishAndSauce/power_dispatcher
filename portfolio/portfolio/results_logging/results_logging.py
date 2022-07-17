@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
+from portfolio.portfolio.results_logging.plotting import StackPlotConfig
 from portfolio.resources.dispatch import DispatchVector
 
 
@@ -53,23 +54,30 @@ class DispatchLog:
                 dispatch.name
             ] = levelized_cost
 
-    def plot(self):
-        plt_this = []
+    def plot(self, plot_config: StackPlotConfig):
         rank = self.dispatch_order
         rank.append('residual_demand')
-        for gen in rank:
-            plt_this.append(self.dispatch_log[gen])
+        plt_this = list([self.dispatch_log[gen] for gen in rank])
+        colors = list([plot_config.color_map.get(gen, 'red') for gen in rank])
 
         plt.stackplot(
             self.dispatch_log.index,
             *plt_this,
-            labels=self.dispatch_order
+            labels=self.dispatch_order,
+            colors=colors
         )
         plt.legend()
         plt.show()
 
     def annual_cost_totals(self):
-        return self.annual_costs.sum(axis=1)
+        df = self.annual_costs.T
+        annual_cost_sum = df['annual_dispatch_cost'].sum()
+        weighted_cost = df['annual_dispatch_cost'] * df['levelized_cost']
+        levelized_cost = weighted_cost.sum() / annual_cost_sum
+        return pd.Series(data={
+            'annual_dispatch_cost': annual_cost_sum,
+            'levelized_cost': levelized_cost
+        })
 
 
 @dataclass
